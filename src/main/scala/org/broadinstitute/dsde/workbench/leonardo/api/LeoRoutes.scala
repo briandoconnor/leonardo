@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.workbench.leonardo.api
 import akka.actor.ActorSystem
 import akka.event.Logging.LogLevel
 import akka.event.{Logging, LoggingAdapter}
+import akka.http.scaladsl.model.headers.{RawHeader, `Content-Type`}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.RouteResult.Complete
@@ -48,31 +49,41 @@ abstract class LeoRoutes(val leonardoService: LeonardoService, val proxyService:
         }
       } ~
       path("cluster" / Segment / Segment) { (googleProject, clusterName) =>
-        put {
-          entity(as[ClusterRequest]) { cluster =>
-            complete {
-              leonardoService.createCluster(userInfo, GoogleProject(googleProject), ClusterName(clusterName), cluster).map { cluster =>
-                StatusCodes.OK -> cluster
+        respondWithHeader(RawHeader("content-type", "application/json; charset=utf-8")) {
+          put {
+            entity(as[ClusterRequest]) { cluster =>
+              complete {
+                leonardoService.createCluster(userInfo, GoogleProject(googleProject), ClusterName(clusterName), cluster).map { cluster =>
+                  StatusCodes.OK -> cluster
+                }
               }
             }
           }
         } ~
-          get {
-            complete {
-              leonardoService.getActiveClusterDetails(userInfo, GoogleProject(googleProject), ClusterName(clusterName)).map { clusterDetails =>
-                StatusCodes.OK -> clusterDetails
-              }
+        get {
+          complete {
+            leonardoService.getActiveClusterDetails(userInfo, GoogleProject(googleProject), ClusterName(clusterName)).map { clusterDetails =>
+              StatusCodes.OK -> clusterDetails
             }
-          } ~
-          delete {
+          }
+        } ~
+        delete {
+          respondWithHeader(`Content-Type`(ContentTypes.`application/json`)) {
             complete {
               leonardoService.deleteCluster(userInfo, GoogleProject(googleProject), ClusterName(clusterName)).map { _ =>
                 StatusCodes.Accepted
               }
             }
           }
+        }
       } ~
-        path("clusters") {
+      path("clusters") {
+
+        //ContentType.apply(MediaTypes.`application/json`, HttpCharsets.`UTF-8`)
+        //RawHeader("content-type", "application/json; charset=utf-8")
+        //`Content-Type`(ContentTypes.`text/plain(UTF-8)`)
+
+        respondWithHeader(`Content-Type`(ContentTypes.`application/json`)) {
           parameterMap { params =>
             complete {
               leonardoService.listClusters(userInfo, params).map { clusters =>
@@ -81,6 +92,7 @@ abstract class LeoRoutes(val leonardoService: LeonardoService, val proxyService:
             }
           }
         }
+      }
     }
 
   def route: Route = (logRequestResult & handleExceptions(myExceptionHandler)) {

@@ -10,7 +10,7 @@ info:
   termsOfService: 'https://github.com/broadinstitute/leonardo'
 basePath: /
 produces:
-  - application/json; charset=utf-8
+  - application/json
 tags:
   - name: test
     description: Test API
