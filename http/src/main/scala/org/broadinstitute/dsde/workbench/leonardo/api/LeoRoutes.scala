@@ -3,6 +3,7 @@ package http
 package api
 
 import java.util.UUID
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
@@ -15,8 +16,9 @@ import com.typesafe.scalalogging.LazyLogging
 import LeoRoutesJsonCodec._
 import LeoRoutesSprayJsonCodec._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import org.broadinstitute.dsde.workbench.leonardo.api.CookieSupport
+import org.broadinstitute.dsde.workbench.google2.KubernetesName
 import org.broadinstitute.dsde.workbench.leonardo.http.api.LeoRoutes._
+import org.broadinstitute.dsde.workbench.leonardo.api.CookieSupport
 import org.broadinstitute.dsde.workbench.leonardo.http.service.{CreateRuntimeRequest, LeonardoService}
 import org.broadinstitute.dsde.workbench.leonardo.model.{LeoException, RequestValidationError}
 import org.broadinstitute.dsde.workbench.model._
@@ -48,7 +50,7 @@ class LeoRoutes(
       CookieSupport.setTokenCookie(userInfo, CookieSupport.tokenCookieName) {
         pathPrefix("cluster") {
           pathPrefix("v2" / Segment / Segment) { (googleProject, clusterNameString) =>
-            validateClusterNameDirective(clusterNameString) { clusterName =>
+            validateNameDirective(clusterNameString, RuntimeName.apply) { clusterName =>
               pathEndOrSingleSlash {
                 put {
                   entity(as[CreateRuntimeRequest]) { cluster =>
@@ -63,7 +65,8 @@ class LeoRoutes(
             }
           } ~
             pathPrefix(Segment / Segment) { (googleProject, clusterNameString) =>
-              validateClusterNameDirective(clusterNameString) { clusterName =>
+
+              validateNameDirective(clusterNameString, RuntimeName.apply) { clusterName =>
                 pathEndOrSingleSlash {
                   put {
                     entity(as[CreateRuntimeRequest]) { cluster =>
@@ -151,9 +154,9 @@ class LeoRoutes(
 object LeoRoutes {
   private val clusterNameReg = "([a-z|0-9|-])*".r
 
-  private def validateClusterName(clusterNameString: String): Either[Throwable, RuntimeName] =
+  private def validateName(clusterNameString: String): Either[Throwable, String] =
     clusterNameString match {
-      case clusterNameReg(_) => Right(RuntimeName(clusterNameString))
+      case clusterNameReg(_) => Right(clusterNameString)
       case _ =>
         Left(
           RequestValidationError(
@@ -162,11 +165,21 @@ object LeoRoutes {
         )
     }
 
-  def validateClusterNameDirective(clusterNameString: String): Directive1[RuntimeName] =
+  def validateKubernetesName[A](nameString: String, apply: String => A): Directive1[A] = {
     Directive { inner =>
-      validateClusterName(clusterNameString) match {
-        case Left(e)  => failWith(e)
+      KubernetesName.withValidation(nameString, apply) match {
+        case Left(e) => failWith(e)
         case Right(c) => inner(Tuple1(c))
+      }
+    }
+  }
+
+
+  def validateNameDirective[A](clusterNameString: String, apply: String => A): Directive1[A] =
+    Directive { inner =>
+      validateName(clusterNameString) match {
+        case Left(e) => failWith(e)
+        case Right(c) => inner(Tuple1(apply(c)))
       }
     }
 }

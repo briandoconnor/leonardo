@@ -6,17 +6,7 @@ import cats.effect.concurrent.Semaphore
 import cats.effect.{IO, Resource}
 import cats.implicits._
 import org.broadinstitute.dsde.workbench.leonardo.config.{Config, LiquibaseConfig}
-import org.broadinstitute.dsde.workbench.leonardo.{
-  CommonTestData,
-  GcsPathUtils,
-  KubernetesCluster,
-  LeonardoTestSuite,
-  Nodepool,
-  PersistentDisk,
-  Runtime,
-  RuntimeConfig,
-  RuntimeName
-}
+import org.broadinstitute.dsde.workbench.leonardo.{CommonTestData, GcsPathUtils, KubernetesCluster, LeonardoTestSuite, Nodepool, PersistentDisk, Runtime, RuntimeConfig, RuntimeName, App}
 import org.broadinstitute.dsde.workbench.model.google.{GoogleProject, ServiceAccountKeyId}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
@@ -125,18 +115,8 @@ trait TestComponent extends LeonardoTestSuite with ScalaFutures with GcsPathUtil
     def save(): KubernetesCluster =
       dbFutureValue {
         kubernetesClusterQuery.save(
-          SaveKubernetesCluster(
-            c.googleProject,
-            c.clusterName,
-            c.location,
-            c.status,
-            c.serviceAccount,
-            c.samResourceId,
-            c.auditInfo,
-            c.labels,
-            c.nodepools.headOption
-              .getOrElse(throw new Exception("test clusters to be saved must have at least 1 nodepool"))
-          )
+          SaveKubernetesCluster(c.googleProject, c.clusterName, c.location, c.status, c.serviceAccount, c.auditInfo, c.nodepools.headOption
+              .getOrElse(throw new Exception("test clusters to be saved must have at least 1 nodepool")))
         )
       }
   }
@@ -145,6 +125,15 @@ trait TestComponent extends LeonardoTestSuite with ScalaFutures with GcsPathUtil
     def save(): Nodepool =
       dbFutureValue {
         nodepoolQuery.saveForCluster(n)
+      }
+  }
+
+  implicit class AppExtension(a: App) {
+    def save(): App =
+      dbFutureValue {
+        appQuery.save(
+          SaveApp(a)
+        )
       }
   }
 

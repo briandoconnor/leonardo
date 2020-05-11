@@ -7,35 +7,17 @@ import com.google.pubsub.v1.ProjectTopicName
 import com.typesafe.config.{ConfigFactory, Config => TypeSafeConfig}
 import net.ceedubs.ficus.Ficus._
 import net.ceedubs.ficus.readers.ValueReader
-import org.broadinstitute.dsde.workbench.google2.{
-  FirewallRuleName,
-  GoogleTopicAdminInterpreter,
-  MachineTypeName,
-  NetworkName,
-  PublisherConfig,
-  RegionName,
-  SubnetworkName,
-  SubscriberConfig,
-  ZoneName
-}
+import org.broadinstitute.dsde.workbench.google2.KubernetesSerializableName.{NamespaceName, ServiceName}
+import org.broadinstitute.dsde.workbench.google2.{FirewallRuleName, GoogleTopicAdminInterpreter, KubernetesName, Location, MachineTypeName, NetworkName, PublisherConfig, RegionName, SubnetworkName, SubscriberConfig, ZoneName}
 import org.broadinstitute.dsde.workbench.leonardo.CustomImage.{DataprocCustomImage, GceCustomImage}
 import org.broadinstitute.dsde.workbench.leonardo.auth.sam.SamAuthProviderConfig
-import org.broadinstitute.dsde.workbench.leonardo.config.ContentSecurityPolicyComponent.{
-  ConnectSrc,
-  FrameAncestors,
-  ObjectSrc,
-  ReportUri,
-  ScriptSrc,
-  StyleSrc
-}
+import org.broadinstitute.dsde.workbench.leonardo.config.ContentSecurityPolicyComponent.{ConnectSrc, FrameAncestors, ObjectSrc, ReportUri, ScriptSrc, StyleSrc}
 import org.broadinstitute.dsde.workbench.leonardo.dao.HttpSamDaoConfig
+import org.broadinstitute.dsde.workbench.leonardo.http.service.LeoKubernetesServiceInterp.LeoKubernetesConfig
 import org.broadinstitute.dsde.workbench.leonardo.model.ServiceAccountProviderConfig
 import org.broadinstitute.dsde.workbench.leonardo.monitor.{DateAccessedUpdaterConfig, LeoPubsubMessageSubscriberConfig}
 import org.broadinstitute.dsde.workbench.leonardo.monitor.MonitorConfig.{DataprocMonitorConfig, GceMonitorConfig}
-import org.broadinstitute.dsde.workbench.leonardo.util.RuntimeInterpreterConfig.{
-  DataprocInterpreterConfig,
-  GceInterpreterConfig
-}
+import org.broadinstitute.dsde.workbench.leonardo.util.RuntimeInterpreterConfig.{DataprocInterpreterConfig, GceInterpreterConfig}
 import org.broadinstitute.dsde.workbench.leonardo.util.VPCInterpreterConfig
 import org.broadinstitute.dsde.workbench.model.WorkbenchEmail
 import org.broadinstitute.dsde.workbench.model.google.GoogleProject
@@ -397,6 +379,7 @@ object Config {
   val autoFreezeConfig = config.as[AutoFreezeConfig]("autoFreeze")
   val persistentDiskConfig = config.as[PersistentDiskConfig]("persistentDisk")
   val serviceAccountProviderConfig = config.as[ServiceAccountProviderConfig]("serviceAccounts.providerConfig")
+  val kubeServiceAccountProviderConfig = config.as[ServiceAccountProviderConfig]("serviceAccounts.kubeConfig")
   val contentSecurityPolicy = config.as[ContentSecurityPolicyConfig]("contentSecurityPolicy").asString
 
   implicit private val zombieClusterConfigValueReader: ValueReader[ZombieRuntimeMonitorConfig] = ValueReader.relative {
@@ -458,16 +441,75 @@ object Config {
       dataprocConfig.regionName
     )
   }
-
   val gceMonitorConfig = config.as[GceMonitorConfig]("gce.monitor")
   val dataprocMonitorConfig = config.as[DataprocMonitorConfig]("dataproc.monitor")
   val uiConfig = config.as[ClusterUIConfig]("ui")
-  val serviceAccountProviderClass = config.as[String]("serviceAccounts.providerClass")
   val samAuthConfig = config.as[SamAuthProviderConfig]("auth.providerConfig")
   val httpSamDap2Config = config.as[HttpSamDaoConfig]("auth.providerConfig")
   val liquibaseConfig = config.as[LiquibaseConfig]("liquibase")
   val welderConfig = config.as[WelderConfig]("welder")
   val dbConcurrency = config.as[Long]("mysql.concurrency")
+
+  implicit val kubeClusterConfigReader: ValueReader[KubernetesClusterConfig] = ValueReader.relative { config =>
+    KubernetesClusterConfig(config.as[Location]("location"))
+  }
+
+  implicit val dummyNodepoolConfig: ValueReader[DummyNodepoolConfig] = ValueReader.relative { config =>
+    DummyNodepoolConfig(
+      config.as[MachineTypeName]("machineType"),
+      config.as[NumNodes]("numNodes"),
+      config.as[Boolean]("autoscalingEnabled")
+    )
+  }
+
+  implicit val galaxyNodepoolConfig: ValueReader[GalaxyNodepoolConfig] = ValueReader.relative { config =>
+    GalaxyNodepoolConfig(
+      config.as[MachineTypeName]("machineType"),
+      config.as[NumNodes]("numNodes"),
+      config.as[Boolean]("autoscalingEnabled"),
+      config.as[AutoscalingConfig]("autoscalingConfig")
+    )
+  }
+
+  implicit val autoscalingConfig: ValueReader[AutoscalingConfig] = ValueReader.relative { config =>
+    AutoscalingConfig(
+      config.as[AutoscalingMin]("autoscalingMin"),
+      config.as[AutoscalingMax]("autoscalingMax")
+    )
+  }
+
+  implicit val appConfigReader: ValueReader[GalaxyAppConfig] = ValueReader.relative { config =>
+    GalaxyAppConfig(
+      config.as[ReleaseName]("releaseName"),
+      config.as[NamespaceName]("namespaceNameSuffix"),
+      config.as[List[ServiceConfig]]("services")
+    )
+  }
+
+  implicit val releaseNameReader: ValueReader[ReleaseName] = stringValueReader.map(ReleaseName)
+  implicit val namespaceNameReader: ValueReader[NamespaceName] = stringValueReader.map(NamespaceName)
+
+  implicit val serviceReader: ValueReader[ServiceConfig] = ValueReader.relative { config =>
+    ServiceConfig(
+      config.as[ServiceName]("name"),
+      config.as[KubernetesServiceKindName]("kind"),
+      List() //TODO fill this out if we need ports
+    )
+  }
+
+  implicit val locationValueReader: ValueReader[Location] = stringValueReader.map(Location)
+  implicit val numNodesValueReader: ValueReader[NumNodes] = intValueReader.map(NumNodes)
+  implicit val autoscalingMinValueReader: ValueReader[AutoscalingMin] = intValueReader.map(AutoscalingMin)
+  implicit val autoscalingMaxValueReader: ValueReader[AutoscalingMax] = intValueReader.map(AutoscalingMax)
+  implicit val serviceNameValueReader: ValueReader[ServiceName] = stringValueReader.map(s => KubernetesName.withValidation(s, ServiceName).getOrElse(throw new Exception(s"Invalid service name in config: ${s}")))
+  implicit val serviceKindValueReader: ValueReader[KubernetesServiceKindName] = stringValueReader.map(KubernetesServiceKindName)
+
+  val gkeClusterConfig = config.as[KubernetesClusterConfig]("gke.cluster")
+  val gkeDummyNodepoolConfig = config.as[DummyNodepoolConfig]("gke.dummyNodepool")
+  val gkeGalaxyNodepoolConfig = config.as[GalaxyNodepoolConfig]("gke.galaxyNodepool")
+  val gkeAppConfig = config.as[GalaxyAppConfig]("gke.app")
+  val gkeNodepoolConfig = NodepoolConfig(gkeDummyNodepoolConfig, gkeGalaxyNodepoolConfig)
+  val leoKubernetesConfig = LeoKubernetesConfig(kubeServiceAccountProviderConfig, gkeClusterConfig, gkeNodepoolConfig, gkeAppConfig, persistentDiskConfig)
 
   val pubsubConfig = config.as[PubsubConfig]("pubsub")
   val vpcConfig = config.as[VPCConfig]("vpc")
@@ -512,4 +554,5 @@ object Config {
 
   val leoPubsubMessageSubscriberConfig = config.as[LeoPubsubMessageSubscriberConfig]("pubsub.subscriber")
   val asyncTaskProcessorConfig = config.as[AsyncTaskProcessor.Config]("async-task-processor")
+
 }

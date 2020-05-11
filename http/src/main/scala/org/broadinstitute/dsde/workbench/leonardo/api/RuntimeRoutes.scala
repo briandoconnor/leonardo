@@ -13,6 +13,7 @@ import akka.http.scaladsl.server.{Directive, Directive1}
 import cats.effect.{IO, Timer}
 import cats.mtl.ApplicativeAsk
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import org.broadinstitute.dsde.workbench.leonardo.http.api.LeoRoutes._
 import io.circe.{Decoder, Encoder}
 import org.broadinstitute.dsde.workbench.google2.{DiskName, MachineTypeName}
 import org.broadinstitute.dsde.workbench.leonardo.JsonCodec._
@@ -33,7 +34,8 @@ import io.opencensus.trace.{AttributeValue, Span}
 
 import scala.concurrent.duration._
 
-class RuntimeRoutes(runtimeService: RuntimeService[IO], userInfoDirectives: UserInfoDirectives)(
+class
+RuntimeRoutes(runtimeService: RuntimeService[IO], userInfoDirectives: UserInfoDirectives)(
   implicit timer: Timer[IO]
 ) {
   val routes: server.Route = userInfoDirectives.requireUserInfo { userInfo =>
@@ -74,7 +76,7 @@ class RuntimeRoutes(runtimeService: RuntimeService[IO], userInfoDirectives: User
               }
             } ~
               pathPrefix(Segment) { runtimeNameString =>
-                validateRuntimeNameDirective(runtimeNameString) { runtimeName =>
+                validateNameDirective(runtimeNameString, RuntimeName.apply) { runtimeName =>
                   pathEndOrSingleSlash {
                     traceRequestForService(serviceData) { span =>
                       post {

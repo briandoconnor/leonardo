@@ -5,14 +5,14 @@ package db
 import cats.effect.IO
 import org.broadinstitute.dsde.workbench.leonardo.CommonTestData._
 import org.broadinstitute.dsde.workbench.leonardo.KubernetesTestData._
-import org.broadinstitute.dsde.workbench.leonardo.db.{labelQuery, LabelResourceType, TestComponent}
+import org.broadinstitute.dsde.workbench.leonardo.db.{LabelResourceType, TestComponent, labelQuery, namespaceQuery}
 import org.scalatest.FlatSpecLike
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class LabelComponentSpec extends FlatSpecLike with TestComponent with GcsPathUtils {
 
-  List(LabelResourceType.Runtime, LabelResourceType.PersistentDisk, LabelResourceType.KubernetesCluster).foreach {
+  List(LabelResourceType.Runtime, LabelResourceType.PersistentDisk, LabelResourceType.App).foreach {
     resourceType =>
       it should s"save, get, update, and delete ${resourceType.asString} labels" in isolatedDbTest {
         for {
@@ -62,10 +62,16 @@ class LabelComponentSpec extends FlatSpecLike with TestComponent with GcsPathUti
       }
   }
 
+  import cats.implicits._
   private def makeResource(index: Int, lblType: LabelResourceType): IO[Long] =
     lblType match {
       case LabelResourceType.Runtime           => IO(makeCluster(index).save()).map(_.id)
       case LabelResourceType.PersistentDisk    => makePersistentDisk(DiskId(index)).save().map(_.id.value)
-      case LabelResourceType.KubernetesCluster => IO(makeKubeCluster(index).save()).map(_.id.id)
+      case LabelResourceType.App =>
+        for {
+          clusterId <- IO(makeKubeCluster(index).save()).map(_.id)
+          nodepoolId <- IO(makeNodepool(index, clusterId).save()).map(_.id)
+          appId <- IO(makeApp(index, nodepoolId).save()).map(_.id)
+        } yield appId.id
     }
 }

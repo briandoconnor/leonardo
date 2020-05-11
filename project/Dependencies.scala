@@ -20,7 +20,7 @@ object Dependencies {
   val workbenchUtilV = "0.5-4c7acd5"
   val workbenchModelV = "0.13-31cacc4"
   val workbenchGoogleV = "0.21-2a218f3"
-  val workbenchGoogle2V = "0.10-b09d90f"
+  val workbenchGoogle2V = "0.10-ee8abab"
   val workbenchMetricsV = "0.3-c5b80d2"
   val workbenchOpenTelemetryV = "0.1-e66171c"
 
@@ -166,6 +166,7 @@ object Dependencies {
     workbenchGoogleTest,
     "org.typelevel" %% "cats-mtl-core"  % "0.7.0",
     "org.typelevel" %% "cats-effect"    % "2.0.0", //forcing cats 2.0.0
+    "com.rms.miu" %% "slick-cats" % "0.10.1",
     googleCloudNio,
     "com.github.julien-truffaut" %%  "monocle-core"  % monocleV,
     "com.github.julien-truffaut" %%  "monocle-macro" % monocleV,
