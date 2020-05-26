@@ -18,12 +18,14 @@ import org.broadinstitute.dsde.workbench.leonardo.util._
 import org.broadinstitute.dsde.workbench.{model, DoneCheckable}
 import org.broadinstitute.dsde.workbench.model.TraceId
 import org.broadinstitute.dsde.workbench.model.google.{GcsBucketName, GcsObjectName, GcsPath, GoogleProject}
-import org.scalatest.{EitherValues, FlatSpec, Matchers}
+import org.scalatest.EitherValues
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class GceRuntimeMonitorSpec extends FlatSpec with Matchers with TestComponent with LeonardoTestSuite with EitherValues {
+class GceRuntimeMonitorSpec extends AnyFlatSpec with Matchers with TestComponent with LeonardoTestSuite with EitherValues {
   implicit val appContext = ApplicativeAsk.const[IO, AppContext](AppContext.generate[IO].unsafeRunSync())
 
   "validateUserScript" should "validate user script properly" in {

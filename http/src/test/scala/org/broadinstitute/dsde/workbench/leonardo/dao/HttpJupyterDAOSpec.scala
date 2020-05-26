@@ -2,13 +2,15 @@ package org.broadinstitute.dsde.workbench.leonardo.dao
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.BeforeAndAfterAll
 import io.circe.parser
 import HttpJupyterDAO.sessionDecoder
 import org.broadinstitute.dsde.workbench.leonardo.dao.ExecutionState.Idle
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 class HttpJupyterDAOSpec
-    extends FlatSpec
+    extends AnyFlatSpec
     with Matchers
     with BeforeAndAfterAll
     with ScalatestRouteTest

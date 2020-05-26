@@ -14,13 +14,13 @@ import org.broadinstitute.dsde.workbench.leonardo.db.{
   TestComponent
 }
 import org.broadinstitute.dsde.workbench.leonardo.http.api.ListRuntimeResponse2
-import org.scalatest.FlatSpecLike
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import org.scalatest.flatspec.AnyFlatSpecLike
 
-class RuntimeServiceDbQueriesSpec extends FlatSpecLike with TestComponent with GcsPathUtils with ScalaFutures {
+class RuntimeServiceDbQueriesSpec extends AnyFlatSpecLike with TestComponent with GcsPathUtils with ScalaFutures {
   val maxElapsed = 5.seconds
 
   "RuntimeServiceDbQueries" should "list runtimes" in isolatedDbTest {
