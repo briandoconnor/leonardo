@@ -18,6 +18,10 @@ class MockGoogleDiskService extends GoogleDiskService[IO] {
     implicit ev: ApplicativeAsk[IO, TraceId]
   ): IO[Operation] = IO.pure(Operation.newBuilder().setId("op").setName("opName").setTargetId("target").build())
 
+  override def getDisk(project: GoogleProject, zone: ZoneName, diskName: DiskName)(
+    implicit ev: ApplicativeAsk[IO, TraceId]
+  ): Stream[IO, Disk] = Stream.empty
+
   override def listDisks(project: GoogleProject, zone: ZoneName)(
     implicit ev: ApplicativeAsk[IO, TraceId]
   ): Stream[IO, Disk] = Stream(Disk.newBuilder().setName("disk").build())
