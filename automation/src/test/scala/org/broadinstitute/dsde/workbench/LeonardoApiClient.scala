@@ -1,6 +1,7 @@
 package org.broadinstitute.dsde.workbench.leonardo
 
 import cats.effect.{IO, Resource, Timer}
+import cats.implicits._
 import org.broadinstitute.dsde.workbench.DoneCheckable
 import org.broadinstitute.dsde.workbench.google2.{streamFUntilDone, DiskName}
 import org.broadinstitute.dsde.workbench.leonardo.ApiJsonDecoder._
@@ -10,7 +11,7 @@ import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.client.middleware.Logger
 import org.http4s.client.{blaze, Client}
 import org.http4s.headers.Authorization
-import org.http4s.{Headers, Method, Request, Uri}
+import org.http4s._
 
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.duration._
@@ -87,7 +88,7 @@ object LeonardoApiClient {
   def deleteDisk(googleProject: GoogleProject, diskName: DiskName)(implicit client: Client[IO],
                                                                    authHeader: Authorization): IO[Unit] =
     client
-      .successful(
+      .expectOr[Unit](
         Request[IO](
           method = Method.DELETE,
           headers = Headers.of(authHeader),
@@ -95,12 +96,7 @@ object LeonardoApiClient {
             .unsafeFromString(LeonardoConfig.Leonardo.apiUrl)
             .withPath(s"/api/google/v1/disks/${googleProject.value}/${diskName.value}")
         )
-      )
-      .flatMap { success =>
-        if (success)
-          IO.unit
-        else IO.raiseError(new Exception(s"Fail to delete disk ${googleProject.value}/${diskName.value}"))
-      }
+      )(onError)
 
   def deleteDiskWithWait(googleProject: GoogleProject, diskName: DiskName)(
     implicit timer: Timer[IO],
@@ -112,4 +108,9 @@ object LeonardoApiClient {
       ioa = getDisk(googleProject, diskName).attempt
       _ <- streamFUntilDone(ioa, 5, 5 seconds).compile.lastOrError
     } yield ()
+
+  private def onError(response: Response[IO]): IO[Throwable] =
+    for {
+      body <- response.bodyAsText(Charset.`UTF-8`).compile.foldMonoid
+    } yield new Exception(body)
 }

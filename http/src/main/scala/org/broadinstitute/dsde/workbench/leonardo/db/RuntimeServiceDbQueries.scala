@@ -131,6 +131,6 @@ object RuntimeServiceDbQueries {
     }
   }
 
-  def isDiskAttachedToRuntime(disk: PersistentDisk)(implicit ec: ExecutionContext): DBIO[Boolean] =
-    clusterQuery.filter(x => x.persistentDiskId.isDefined && x.persistentDiskId === disk.id).length.result.map(_ > 0)
+  def isDiskAttachedToRuntime(diskId: DiskId)(implicit ec: ExecutionContext): DBIO[Boolean] =
+    clusterQuery.filter(x => x.persistentDiskId.isDefined && x.persistentDiskId === diskId).length.result.map(_ > 0)
 }

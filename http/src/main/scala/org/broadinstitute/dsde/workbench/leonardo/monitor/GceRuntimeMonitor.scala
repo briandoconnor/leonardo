@@ -372,6 +372,9 @@ class GceRuntimeMonitor[F[_]: Parallel](
         clusterQuery.completeDeletion(runtimeAndRuntimeConfig.runtime.id, ctx.now)
       }
 
+      cluster <- dbRef.inTransaction(clusterQuery.getClusterById(runtimeAndRuntimeConfig.runtime.id))
+      _ <- logger.info(s"cluster after deletion ${cluster}")
+
       _ <- authProvider
         .notifyResourceDeleted(
           runtimeAndRuntimeConfig.runtime.samResource,

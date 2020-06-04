@@ -455,8 +455,8 @@ object clusterQuery extends TableQuery(new ClusterTable(_)) {
 
   def completeDeletion(id: Long, destroyedDate: Instant): DBIO[Int] =
     findByIdQuery(id)
-      .map(c => (c.destroyedDate, c.status, c.hostIp, c.dateAccessed))
-      .update((destroyedDate, RuntimeStatus.Deleted.toString, None, destroyedDate))
+      .map(c => (c.destroyedDate, c.status, c.hostIp, c.dateAccessed, c.persistentDiskId))
+      .update((destroyedDate, RuntimeStatus.Deleted.toString, None, destroyedDate, None))
 
   def updateClusterStatusAndHostIp(id: Long,
                                    status: RuntimeStatus,

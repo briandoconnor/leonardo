@@ -53,7 +53,6 @@ class RuntimeCreationPdSpec
         implicit val client = dep.httpClient
         for {
           _ <- LeonardoApiClient.deleteRuntimeWithWait(googleProject, runtimeName)
-          _ = println("deleted runtime")
           disk <- LeonardoApiClient.getDisk(googleProject, diskName)
           _ <- LeonardoApiClient.deleteDiskWithWait(googleProject, diskName)
           diskAfterDelete <- LeonardoApiClient.getDisk(googleProject, diskName)
