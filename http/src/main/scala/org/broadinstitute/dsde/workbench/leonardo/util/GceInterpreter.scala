@@ -132,6 +132,7 @@ class GceInterpreter[F[_]: Parallel: ContextShift: Logger](
         case x: RuntimeConfig.GceWithPdConfig =>
           AttachedDisk.newBuilder
             .setBoot(false)
+            .setDeviceName("user-disk")
             .setInitializeParams(
               AttachedDiskInitializeParams
                 .newBuilder()
