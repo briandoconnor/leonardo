@@ -544,27 +544,3 @@ final case class ListRuntimeResponse2(id: Long,
                                       status: RuntimeStatus,
                                       labels: LabelMap,
                                       patchInProgress: Boolean)
-
-sealed trait DiskConfigRequest extends Product with Serializable {
-  def name: DiskName
-  def create: Boolean
-}
-object DiskConfigRequest {
-  final case class Reference(name: DiskName) extends DiskConfigRequest {
-    val create = false
-  }
-  final case class Create(name: DiskName,
-                          size: Option[DiskSize],
-                          diskType: Option[DiskType],
-                          blockSize: Option[BlockSize],
-                          labels: LabelMap)
-      extends DiskConfigRequest {
-    val create = true
-  }
-}
-
-final case class DiskConfig(name: DiskName, size: DiskSize, diskType: DiskType, blockSize: BlockSize)
-object DiskConfig {
-  def fromPersistentDisk(disk: PersistentDisk): DiskConfig =
-    DiskConfig(disk.name, disk.size, disk.diskType, disk.blockSize)
-}
