@@ -6,14 +6,10 @@ import org.broadinstitute.dsde.workbench.google2.{DiskName, GoogleDiskService, Z
 import org.http4s.{AuthScheme, Credentials}
 import org.http4s.client.Client
 import org.http4s.headers.Authorization
-import org.scalatest.ParallelTestExecution
+import org.scalatest.{DoNotDiscover, ParallelTestExecution}
 
-//@DoNotDiscover
-class RuntimeCreationPdSpec
-    extends GPAllocFixtureSpec
-    with ParallelTestExecution
-    with LeonardoTestUtils
-    with GPAllocBeforeAndAfterAll {
+@DoNotDiscover
+class RuntimeCreationPdSpec extends GPAllocFixtureSpec with ParallelTestExecution with LeonardoTestUtils {
   implicit val authTokenForOldApiClient = ronAuthToken
   implicit val auth: Authorization = Authorization(Credentials.Token(AuthScheme.Bearer, ronCreds.makeAuthToken().value))
 
@@ -26,7 +22,7 @@ class RuntimeCreationPdSpec
 
   "create and attach a persistent disk" in { googleProject =>
     val runtimeName = randomClusterName
-    val diskName = DiskName("test-disk-1")
+    val diskName = DiskName("test-disk-3")
     val runtimeRequest = defaultRuntimeRequest.copy(
       runtimeConfig = Some(
         RuntimeConfigRequest.GceWithPdConfig(
@@ -56,7 +52,6 @@ class RuntimeCreationPdSpec
           disk <- LeonardoApiClient.getDisk(googleProject, diskName)
           _ <- LeonardoApiClient.deleteDiskWithWait(googleProject, diskName)
           diskAfterDelete <- LeonardoApiClient.getDisk(googleProject, diskName)
-          //          diskAfterDelete <- dep.googleDiskService.getDisk(googleProject, zone, diskName).compile.last
         } yield {
           disk.status shouldBe DiskStatus.Ready
           diskAfterDelete.status shouldBe DiskStatus.Deleted

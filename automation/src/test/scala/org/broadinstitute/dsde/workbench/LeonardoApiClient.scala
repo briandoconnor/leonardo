@@ -32,7 +32,7 @@ object LeonardoApiClient {
     googleProject: GoogleProject,
     diskName: DiskName
   )(implicit client: Client[IO], authHeader: Authorization): IO[GetPersistentDiskResponse] =
-    client.expect[GetPersistentDiskResponse](
+    client.expectOr[GetPersistentDiskResponse](
       Request[IO](
         method = Method.GET,
         headers = Headers.of(authHeader),
@@ -40,7 +40,7 @@ object LeonardoApiClient {
           .unsafeFromString(LeonardoConfig.Leonardo.apiUrl)
           .withPath(s"/api/google/v1/disks/${googleProject.value}/${diskName.value}")
       )
-    )
+    )(onError)
 
   def getRuntime(
     googleProject: GoogleProject,
@@ -88,7 +88,7 @@ object LeonardoApiClient {
   def deleteDisk(googleProject: GoogleProject, diskName: DiskName)(implicit client: Client[IO],
                                                                    authHeader: Authorization): IO[Unit] =
     client
-      .expectOr[Unit](
+      .successful(
         Request[IO](
           method = Method.DELETE,
           headers = Headers.of(authHeader),
@@ -96,7 +96,8 @@ object LeonardoApiClient {
             .unsafeFromString(LeonardoConfig.Leonardo.apiUrl)
             .withPath(s"/api/google/v1/disks/${googleProject.value}/${diskName.value}")
         )
-      )(onError)
+      )
+      .void
 
   def deleteDiskWithWait(googleProject: GoogleProject, diskName: DiskName)(
     implicit timer: Timer[IO],
