@@ -597,7 +597,13 @@ class RuntimeServiceInterp[F[_]: Parallel](config: RuntimeServiceConfig,
       ctx <- as.ask
       diskOpt <- persistentDiskQuery.getActiveByName(googleProject, req.name).transaction
       disk <- diskOpt match {
-        case Some(pd) => F.pure(pd)
+        case Some(pd) =>
+          for {
+            // throw 409 if the disk is attached to a runtime
+            attached <- RuntimeServiceDbQueries.isDiskAttachedToRuntime(pd.id).transaction
+            _ <- if (attached) F.raiseError[Unit](DiskAlreadyAttachedException(googleProject, req.name, ctx.traceId))
+            else F.unit
+          } yield pd
         case None =>
           for {
             hasPermission <- authProvider.hasProjectPermission(userInfo, CreatePersistentDisk, googleProject)
