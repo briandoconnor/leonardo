@@ -32,67 +32,62 @@ class KubernetesRoutes(kubernetesService: LeoKubernetesService[IO], userInfoDire
   val routes: server.Route = userInfoDirectives.requireUserInfo { userInfo =>
     CookieSupport.setTokenCookie(userInfo, CookieSupport.tokenCookieName) {
       implicit val traceId = ApplicativeAsk.const[IO, TraceId](TraceId(UUID.randomUUID()))
-      pathPrefix("google" / "v1" / "app" ) {
+      pathPrefix("google" / "v1" / "app") {
         pathEndOrSingleSlash {
           parameterMap { params =>
             get {
               complete(
-                listAppHandler(userInfo,
-                  None,
-                  params)
+                listAppHandler(userInfo, None, params)
               )
             }
           }
         } ~
-        pathPrefix(googleProjectSegment) { googleProject =>
-          pathEndOrSingleSlash {
-            parameterMap { params =>
-              get {
-                complete(
-                  listAppHandler(
-                    userInfo,
-                    Some(googleProject),
-                    params
+          pathPrefix(googleProjectSegment) { googleProject =>
+            pathEndOrSingleSlash {
+              parameterMap { params =>
+                get {
+                  complete(
+                    listAppHandler(
+                      userInfo,
+                      Some(googleProject),
+                      params
+                    )
                   )
-                )
-              }
-            }
-          } ~
-            pathPrefix(Segment) { appNameString =>
-              validateKubernetesName(appNameString, AppName.apply) { appName =>
-                pathEndOrSingleSlash {
-                  post {
-                    entity(as[CreateAppRequest]) { req =>
-                      complete(
-                        createAppHandler(userInfo,
-                          googleProject,
-                          appName,
-                          req)
-                      )
-                    }
-                  } ~
-                    get {
-                      complete(
-                        getAppHandler(
-                          userInfo,
-                          googleProject,
-                          appName
-                        )
-                      )
-                    } ~
-                    delete {
-                      complete(
-                        deleteAppHandler(
-                          userInfo,
-                          googleProject,
-                          appName
-                        )
-                      )
-                    }
                 }
               }
-            }
-        }
+            } ~
+              pathPrefix(Segment) { appNameString =>
+                validateKubernetesName(appNameString, AppName.apply) { appName =>
+                  pathEndOrSingleSlash {
+                    post {
+                      entity(as[CreateAppRequest]) { req =>
+                        complete(
+                          createAppHandler(userInfo, googleProject, appName, req)
+                        )
+                      }
+                    } ~
+                      get {
+                        complete(
+                          getAppHandler(
+                            userInfo,
+                            googleProject,
+                            appName
+                          )
+                        )
+                      } ~
+                      delete {
+                        complete(
+                          deleteAppHandler(
+                            userInfo,
+                            googleProject,
+                            appName
+                          )
+                        )
+                      }
+                  }
+                }
+              }
+          }
       }
     }
   }
@@ -162,11 +157,22 @@ class KubernetesRoutes(kubernetesService: LeoKubernetesService[IO], userInfoDire
 }
 
 object KubernetesRoutes {
-  implicit val createAppDecoder: Decoder[CreateAppRequest] = Decoder.forProduct4("kubernetesRuntimeConfig", "appType", "diskConfig", "labels")(CreateAppRequest.apply)
+  implicit val createAppDecoder: Decoder[CreateAppRequest] =
+    Decoder.forProduct4("kubernetesRuntimeConfig", "appType", "diskConfig", "labels")(CreateAppRequest.apply)
   implicit val nameKeyDecoder: KeyDecoder[ServiceName] = KeyDecoder.decodeKeyString.map(ServiceName.apply)
-  implicit val getAppDecoder: Decoder[GetAppResponse] = Decoder.forProduct5("kubernetesRuntimeConfig", "errors", "status", "proxyUrls", "diskName")(GetAppResponse.apply)
-  implicit val listAppDecoder: Decoder[ListAppResponse] = Decoder.forProduct7("googleProject", "kubernetesRuntimeConfig", "errors", "status", "proxyUrls", "appName", "diskName")(ListAppResponse.apply)
-  implicit val createEncoder: Encoder[Create] = Encoder.forProduct6("create", "name", "size", "diskType", "blockSize", "labels")(x => (x.create, x.name, x.size, x.diskType, x.blockSize, x.labels))
+  implicit val getAppDecoder: Decoder[GetAppResponse] =
+    Decoder.forProduct5("kubernetesRuntimeConfig", "errors", "status", "proxyUrls", "diskName")(GetAppResponse.apply)
+  implicit val listAppDecoder: Decoder[ListAppResponse] = Decoder.forProduct7("googleProject",
+                                                                              "kubernetesRuntimeConfig",
+                                                                              "errors",
+                                                                              "status",
+                                                                              "proxyUrls",
+                                                                              "appName",
+                                                                              "diskName")(ListAppResponse.apply)
+  implicit val createEncoder: Encoder[Create] =
+    Encoder.forProduct6("create", "name", "size", "diskType", "blockSize", "labels")(x =>
+      (x.create, x.name, x.size, x.diskType, x.blockSize, x.labels)
+    )
 
   implicit val refEncoder: Encoder[Reference] = Encoder.forProduct2("create", "name")(x => (x.create, x.name))
   implicit val diskConfigRequestEncoder: Encoder[DiskConfigRequest] = Encoder.instance { req =>
@@ -175,11 +181,23 @@ object KubernetesRoutes {
       case ref: DiskConfigRequest.Reference => refEncoder(ref)
     }
   }
-  implicit val createAppEncoder: Encoder[CreateAppRequest] = Encoder.forProduct4("kubernetesRuntimeConfig", "appType", "diskConfig", "labels")(x => CreateAppRequest.unapply(x).get)
-
+  implicit val createAppEncoder: Encoder[CreateAppRequest] =
+    Encoder.forProduct4("kubernetesRuntimeConfig", "appType", "diskConfig", "labels")(x =>
+      CreateAppRequest.unapply(x).get
+    )
 
   implicit val nameKeyEncoder: KeyEncoder[ServiceName] = KeyEncoder.encodeKeyString.contramap(_.value)
-  implicit val listAppResponseEncoder: Encoder[ListAppResponse] = Encoder.forProduct7("googleProject", "kubernetesRuntimeConfig", "errors", "status", "proxyUrls", "appName", "diskName")(x => ListAppResponse.unapply(x).get)
+  implicit val listAppResponseEncoder: Encoder[ListAppResponse] =
+    Encoder.forProduct7("googleProject",
+                        "kubernetesRuntimeConfig",
+                        "errors",
+                        "status",
+                        "proxyUrls",
+                        "appName",
+                        "diskName")(x => ListAppResponse.unapply(x).get)
 
-  implicit val getAppResponseEncoder: Encoder[GetAppResponse] = Encoder.forProduct5("kubernetesRuntimeConfig", "errors", "status", "proxyUrls", "diskName")(x => GetAppResponse.unapply(x).get)
+  implicit val getAppResponseEncoder: Encoder[GetAppResponse] =
+    Encoder.forProduct5("kubernetesRuntimeConfig", "errors", "status", "proxyUrls", "diskName")(x =>
+      GetAppResponse.unapply(x).get
+    )
 }

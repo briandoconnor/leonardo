@@ -1,6 +1,12 @@
 package org.broadinstitute.dsde.workbench.leonardo.db
 
-import org.broadinstitute.dsde.workbench.leonardo.{AppId, KubernetesService, KubernetesServiceKindName, ServiceConfig, ServiceId}
+import org.broadinstitute.dsde.workbench.leonardo.{
+  AppId,
+  KubernetesService,
+  KubernetesServiceKindName,
+  ServiceConfig,
+  ServiceId
+}
 import slick.lifted.Tag
 import LeoProfile.api._
 import LeoProfile.mappedColumnImplicits._
@@ -10,7 +16,10 @@ import org.broadinstitute.dsde.workbench.google2.KubernetesSerializableName._
 
 import scala.concurrent.ExecutionContext
 
-final case class ServiceRecord(id: ServiceId, appId: AppId, serviceName: ServiceName, serviceKind: KubernetesServiceKindName)
+final case class ServiceRecord(id: ServiceId,
+                               appId: AppId,
+                               serviceName: ServiceName,
+                               serviceKind: KubernetesServiceKindName)
 
 class ServiceTable(tag: Tag) extends Table[ServiceRecord](tag, "SERVICE") {
   def id = column[ServiceId]("id", O.AutoInc, O.PrimaryKey)
@@ -23,12 +32,16 @@ class ServiceTable(tag: Tag) extends Table[ServiceRecord](tag, "SERVICE") {
 
 object serviceQuery extends TableQuery(new ServiceTable(_)) {
 
-  def saveAllForApp(appId: AppId, services: List[KubernetesService])(implicit ec: ExecutionContext): DBIO[List[KubernetesService]] =
+  def saveAllForApp(appId: AppId,
+                    services: List[KubernetesService])(implicit ec: ExecutionContext): DBIO[List[KubernetesService]] =
     services.traverse(s => saveForApp(appId, s))
 
   def saveForApp(appId: AppId, service: KubernetesService)(implicit ec: ExecutionContext): DBIO[KubernetesService] =
     for {
-      serviceId <- serviceQuery returning serviceQuery.map(_.id) += ServiceRecord(ServiceId(-1), appId, service.config.name, service.config.kind)
+      serviceId <- serviceQuery returning serviceQuery.map(_.id) += ServiceRecord(ServiceId(-1),
+                                                                                  appId,
+                                                                                  service.config.name,
+                                                                                  service.config.kind)
       ports <- portQuery.saveAllForService(service.copy(id = serviceId))
     } yield service.copy(id = serviceId, service.config.copy(ports = ports))
 
@@ -43,4 +56,3 @@ object serviceQuery extends TableQuery(new ServiceTable(_)) {
     )
 
 }
-

@@ -370,7 +370,6 @@ class RuntimeServiceInterpSpec extends FlatSpec with LeonardoTestSuite with Test
             .transaction
           message <- publisherQueue.tryDequeue1
 
-
         } yield {
           dbRuntimeOpt.get.status shouldBe RuntimeStatus.Deleting
           message shouldBe (None)

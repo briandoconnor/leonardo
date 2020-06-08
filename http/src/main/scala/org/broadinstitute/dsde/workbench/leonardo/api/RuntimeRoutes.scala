@@ -34,8 +34,7 @@ import io.opencensus.trace.{AttributeValue, Span}
 
 import scala.concurrent.duration._
 
-class
-RuntimeRoutes(runtimeService: RuntimeService[IO], userInfoDirectives: UserInfoDirectives)(
+class RuntimeRoutes(runtimeService: RuntimeService[IO], userInfoDirectives: UserInfoDirectives)(
   implicit timer: Timer[IO]
 ) {
   val routes: server.Route = userInfoDirectives.requireUserInfo { userInfo =>

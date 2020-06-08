@@ -121,7 +121,7 @@ final class DataAccess(blocker: Blocker) {
       TableQuery[NamespaceTable].delete andThen
       TableQuery[NodepoolTable].delete andThen
       TableQuery[KubernetesClusterTable].delete andThen
-  TableQuery[PersistentDiskTable].delete
+      TableQuery[PersistentDiskTable].delete
 
   def sqlDBStatus() =
     sql"select version()".as[String]

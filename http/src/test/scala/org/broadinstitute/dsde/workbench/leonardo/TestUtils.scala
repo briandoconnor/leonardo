@@ -42,7 +42,7 @@ object TestUtils extends Matchers {
       def areEqual(a: Namespace, b: Any): Boolean =
         b match {
           case c: Namespace => a.copy(id = FixedId) == c.copy(id = FixedId)
-          case _           => false
+          case _            => false
         }
     }
   }
@@ -67,9 +67,24 @@ object TestUtils extends Matchers {
 
       def areEqual(a: App, b: Any): Boolean =
         b match {
-          case c: App =>   a.copy(id = FixedId, appResources = a.appResources.copy(namespace = a.appResources.namespace.copy(id = FixedNamespaceId), services = fixIdsForServices(a.appResources.services), disk = a.appResources.disk.map(d => d.copy(id = FixedDiskId)))) ===
-            c.copy(id = FixedId, appResources = c.appResources.copy(namespace = c.appResources.namespace.copy(id = FixedNamespaceId), services = fixIdsForServices(c.appResources.services), disk = c.appResources.disk.map(d => d.copy(id = FixedDiskId))))
-          case _           => false
+          case c: App =>
+            a.copy(
+              id = FixedId,
+              appResources = a.appResources.copy(
+                namespace = a.appResources.namespace.copy(id = FixedNamespaceId),
+                services = fixIdsForServices(a.appResources.services),
+                disk = a.appResources.disk.map(d => d.copy(id = FixedDiskId))
+              )
+            ) ===
+              c.copy(
+                id = FixedId,
+                appResources = c.appResources.copy(
+                  namespace = c.appResources.namespace.copy(id = FixedNamespaceId),
+                  services = fixIdsForServices(c.appResources.services),
+                  disk = c.appResources.disk.map(d => d.copy(id = FixedDiskId))
+                )
+              )
+          case _ => false
         }
     }
   }
@@ -78,9 +93,9 @@ object TestUtils extends Matchers {
     val FixedServiceId = ServiceId(0)
     val FixedPortId = PortId(0)
     service.copy(
-        id = FixedServiceId,
-        config = service.config.copy(ports = service.config.ports.map(p =>
-          p.copy(id = FixedPortId)).sortBy(_.servicePort.name.value))
+      id = FixedServiceId,
+      config = service.config
+        .copy(ports = service.config.ports.map(p => p.copy(id = FixedPortId)).sortBy(_.servicePort.name.value))
     )
   }
 
@@ -93,7 +108,7 @@ object TestUtils extends Matchers {
       def areEqual(a: KubernetesService, b: Any): Boolean =
         b match {
           case c: KubernetesService => fixIdForService(a) === fixIdForService(c)
-          case _           => false
+          case _                    => false
         }
     }
   }
@@ -103,7 +118,7 @@ object TestUtils extends Matchers {
       def areEqual(as: List[Namespace], bs: Any): Boolean =
         bs match {
           case cs: List[_] => isNamespaceListEquivalent(as, cs)
-          case _          => false
+          case _           => false
         }
     }
   }
@@ -148,8 +163,6 @@ object TestUtils extends Matchers {
         }
     }
   }
-
-
 
   // Equivalence means clusters have the same fields when ignoring the id field
   private def isEquivalent(cs1: Traversable[_], cs2: Traversable[_]): Boolean = {

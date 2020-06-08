@@ -33,15 +33,17 @@ class NodepoolComponentSpec extends FlatSpecLike with TestComponent {
 
     val now = Instant.now()
     dbFutureValue(nodepoolQuery.markAsDeleted(savedNodepool2.id, now)) shouldBe 1
-    val nodepoolGetAll2 = dbFutureValue(kubernetesClusterQuery.getMinimalClusterById(savedCluster1.id)).map(_.nodepools).get
+    val nodepoolGetAll2 =
+      dbFutureValue(kubernetesClusterQuery.getMinimalClusterById(savedCluster1.id)).map(_.nodepools).get
     nodepoolGetAll2.size shouldBe 2
     nodepoolGetAll2 should contain(savedNodepool1)
     nodepoolGetAll2 should not contain (savedNodepool2)
 
-    val deletedNodepoolGet = dbFutureValue(kubernetesClusterQuery.getMinimalClusterById(savedCluster1.id, includeDeletedNodepool = true))
+    val deletedNodepoolGet =
+      dbFutureValue(kubernetesClusterQuery.getMinimalClusterById(savedCluster1.id, includeDeletedNodepool = true))
     deletedNodepoolGet.get.nodepools should contain
-      savedNodepool2.copy(status = NodepoolStatus.Deleted,
-                          auditInfo = savedNodepool2.auditInfo.copy(destroyedDate = Some(now)))
+    savedNodepool2.copy(status = NodepoolStatus.Deleted,
+                        auditInfo = savedNodepool2.auditInfo.copy(destroyedDate = Some(now)))
 
     dbFutureValue(nodepoolQuery.markActiveAsDeletedForCluster(savedCluster1.id, now)) shouldBe 2
     dbFutureValue(kubernetesClusterQuery.getMinimalClusterById(savedCluster1.id)).map(_.nodepools) shouldBe Some(List())

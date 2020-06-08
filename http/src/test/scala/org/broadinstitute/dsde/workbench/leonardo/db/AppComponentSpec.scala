@@ -39,10 +39,12 @@ class AppComponentSpec extends FlatSpecLike with TestComponent {
 
     val disk = makePersistentDisk(DiskId(1)).save().unsafeRunSync()
     val basicApp = makeApp(1, savedNodepool1.id)
-    val complexApp = basicApp.copy(appResources = basicApp.appResources.copy(
-      disk = Some(disk),
-      services = List(makeService(1), makeService(2))
-    ))
+    val complexApp = basicApp.copy(appResources =
+      basicApp.appResources.copy(
+        disk = Some(disk),
+        services = List(makeService(1), makeService(2))
+      )
+    )
 
     val savedApp = complexApp.save()
     complexApp shouldEqual savedApp
@@ -56,9 +58,11 @@ class AppComponentSpec extends FlatSpecLike with TestComponent {
     val savedApp1 = app1.save()
 
     savedApp1.status shouldEqual app1.status
-    dbFutureValue { appQuery.updateStatus(savedApp1.id, AppStatus.Running) } shouldEqual 1
+    dbFutureValue(appQuery.updateStatus(savedApp1.id, AppStatus.Running)) shouldEqual 1
 
-   val getApp = dbFutureValue { KubernetesServiceDbQueries.getActiveFullAppByName(savedCluster1.googleProject, savedApp1.appName) }
+    val getApp = dbFutureValue {
+      KubernetesServiceDbQueries.getActiveFullAppByName(savedCluster1.googleProject, savedApp1.appName)
+    }
     getApp.get.app.status shouldEqual AppStatus.Running
   }
 

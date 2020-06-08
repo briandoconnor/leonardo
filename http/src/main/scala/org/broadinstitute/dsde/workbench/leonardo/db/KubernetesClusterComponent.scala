@@ -17,7 +17,20 @@ import org.broadinstitute.dsde.workbench.leonardo.db.LeoProfile.{dummyDate, unma
 
 import scala.concurrent.ExecutionContext
 
-final case class KubernetesClusterRecord(id: KubernetesClusterLeoId, googleProject: GoogleProject, clusterName: KubernetesClusterName, location: Location, status: KubernetesClusterStatus, serviceAccount: WorkbenchEmail, creator: WorkbenchEmail, createdDate: Instant, destroyedDate: Instant, dateAccessed: Instant, apiServerIp: Option[KubernetesApiServerIp], networkName: Option[NetworkName], subNetworkName: Option[SubnetworkName], subNetworkIpRange: Option[IpRange])
+final case class KubernetesClusterRecord(id: KubernetesClusterLeoId,
+                                         googleProject: GoogleProject,
+                                         clusterName: KubernetesClusterName,
+                                         location: Location,
+                                         status: KubernetesClusterStatus,
+                                         serviceAccount: WorkbenchEmail,
+                                         creator: WorkbenchEmail,
+                                         createdDate: Instant,
+                                         destroyedDate: Instant,
+                                         dateAccessed: Instant,
+                                         apiServerIp: Option[KubernetesApiServerIp],
+                                         networkName: Option[NetworkName],
+                                         subNetworkName: Option[SubnetworkName],
+                                         subNetworkIpRange: Option[IpRange])
 
 case class KubernetesClusterTable(tag: Tag) extends Table[KubernetesClusterRecord](tag, "KUBERNETES_CLUSTER") {
   def id = column[KubernetesClusterLeoId]("id", O.PrimaryKey, O.AutoInc)
@@ -57,21 +70,24 @@ case class KubernetesClusterTable(tag: Tag) extends Table[KubernetesClusterRecor
 object kubernetesClusterQuery extends TableQuery(new KubernetesClusterTable(_)) {
 
   //this retrieves the nodepool and namespaces associated with a cluster
-  def getMinimalClusterById(id: KubernetesClusterLeoId, includeDeletedNodepool: Boolean = false)(implicit ec: ExecutionContext): DBIO[Option[KubernetesCluster]] =
+  def getMinimalClusterById(id: KubernetesClusterLeoId, includeDeletedNodepool: Boolean = false)(
+    implicit ec: ExecutionContext
+  ): DBIO[Option[KubernetesCluster]] =
     joinMinimalClusterAndUnmarshal(
       findByIdQuery(id),
       includeDeletedNodepool match {
-        case false => nodepoolQuery.filter (_.destroyedDate === dummyDate)
-        case true => nodepoolQuery
+        case false => nodepoolQuery.filter(_.destroyedDate === dummyDate)
+        case true  => nodepoolQuery
       }
     ).map(_.headOption)
 
-
   //this retrieves the nodepool and namespaces associated with a cluster
-  def getMinimalActiveClusterByName(googleProject: GoogleProject)(implicit ec: ExecutionContext): DBIO[Option[KubernetesCluster]] =
+  def getMinimalActiveClusterByName(
+    googleProject: GoogleProject
+  )(implicit ec: ExecutionContext): DBIO[Option[KubernetesCluster]] =
     joinMinimalClusterAndUnmarshal(
-        findActiveByNameQuery(googleProject),
-        nodepoolQuery.filter(_.destroyedDate === dummyDate)
+      findActiveByNameQuery(googleProject),
+      nodepoolQuery.filter(_.destroyedDate === dummyDate)
     ).map(_.headOption)
 
   private[db] def save(saveCluster: SaveKubernetesCluster)(implicit ec: ExecutionContext): DBIO[KubernetesCluster] = {
@@ -92,9 +108,9 @@ object kubernetesClusterQuery extends TableQuery(new KubernetesClusterTable(_)) 
       .map(c => (c.apiServerIp, c.networkName, c.subNetworkName, c.subNetworkIpRange))
       .update(
         (Some(asyncFields.apiServerIp),
-          Some(asyncFields.networkInfo.networkName),
-          Some(asyncFields.networkInfo.subNetworkName),
-          Some(asyncFields.networkInfo.subNetworkIpRange))
+         Some(asyncFields.networkInfo.networkName),
+         Some(asyncFields.networkInfo.subNetworkName),
+         Some(asyncFields.networkInfo.subNetworkIpRange))
       )
 
   def markPendingDeletion(id: KubernetesClusterLeoId)(implicit ec: ExecutionContext): DBIO[Int] =
@@ -113,20 +129,24 @@ object kubernetesClusterQuery extends TableQuery(new KubernetesClusterTable(_)) 
         .update((destroyedDate, KubernetesClusterStatus.Deleted))
     } yield nodepool + cluster
 
-  private[db] def joinMinimalClusterAndUnmarshal(clusterQuery: Query[KubernetesClusterTable, KubernetesClusterRecord, Seq], nodepoolQuery: Query[NodepoolTable, NodepoolRecord, Seq])(implicit ec: ExecutionContext): DBIO[List[KubernetesCluster]] =
-    joinMinimalCluster(clusterQuery, nodepoolQuery)
-      .result
+  private[db] def joinMinimalClusterAndUnmarshal(
+    clusterQuery: Query[KubernetesClusterTable, KubernetesClusterRecord, Seq],
+    nodepoolQuery: Query[NodepoolTable, NodepoolRecord, Seq]
+  )(implicit ec: ExecutionContext): DBIO[List[KubernetesCluster]] =
+    joinMinimalCluster(clusterQuery, nodepoolQuery).result
       .map(recs => aggregateJoinedCluster(recs).toList)
 
-  private[db] def joinMinimalCluster(clusterQuery: Query[KubernetesClusterTable, KubernetesClusterRecord, Seq], nodepoolQuery: Query[NodepoolTable, NodepoolRecord, Seq]) =
+  private[db] def joinMinimalCluster(clusterQuery: Query[KubernetesClusterTable, KubernetesClusterRecord, Seq],
+                                     nodepoolQuery: Query[NodepoolTable, NodepoolRecord, Seq]) =
     for {
       ((cluster, nodepoolOpt), namespaceOpt) <- clusterQuery joinLeft
         nodepoolQuery on (_.id === _.clusterId) joinLeft
         namespaceQuery on (_._1.id === _.clusterId)
     } yield (cluster, nodepoolOpt, namespaceOpt)
 
-  private[db] def aggregateJoinedCluster(records: Seq[(KubernetesClusterRecord, Option[NodepoolRecord], Option[NamespaceRecord])]
-                                        ): Seq[KubernetesCluster] = {
+  private[db] def aggregateJoinedCluster(
+    records: Seq[(KubernetesClusterRecord, Option[NodepoolRecord], Option[NamespaceRecord])]
+  ): Seq[KubernetesCluster] = {
     val map = records.toList.foldMap {
       case (clusterRecord, nodepoolRecordOpt, clusterNamespaceRecordOpt) =>
         Map(clusterRecord -> (nodepoolRecordOpt.toList, clusterNamespaceRecordOpt.toList))
@@ -134,7 +154,8 @@ object kubernetesClusterQuery extends TableQuery(new KubernetesClusterTable(_)) 
 
     map.map {
       case (clusterRec, (nodepools, clusterNamespaces)) =>
-        unmarshalKubernetesCluster(clusterRec,
+        unmarshalKubernetesCluster(
+          clusterRec,
           nodepools.toSet.map(rec => unmarshalNodepool(rec, List.empty)).toList,
           clusterNamespaces.toSet[NamespaceRecord].map(rec => Namespace(rec.id, rec.namespaceName)).toList
         )
@@ -142,17 +163,29 @@ object kubernetesClusterQuery extends TableQuery(new KubernetesClusterTable(_)) 
   }
 
   private[db] def unmarshalKubernetesCluster(cr: KubernetesClusterRecord,
-                                         nodepools: List[Nodepool],
-                                         namespaces: List[Namespace]): KubernetesCluster =
-    KubernetesCluster(cr.id, cr.googleProject, cr.clusterName, cr.location, cr.status, cr.serviceAccount, AuditInfo(
-      cr.creator,
-      cr.createdDate,
-      unmarshalDestroyedDate(cr.destroyedDate),
-      cr.dateAccessed
-    ), (cr.apiServerIp, unmarshalNetwork(cr)) match {
-      case (Some(apiServerIp), Some(networkFields)) => Some(KubernetesClusterAsyncFields(apiServerIp, networkFields))
-      case _                                        => None
-    }, namespaces, nodepools, List())
+                                             nodepools: List[Nodepool],
+                                             namespaces: List[Namespace]): KubernetesCluster =
+    KubernetesCluster(
+      cr.id,
+      cr.googleProject,
+      cr.clusterName,
+      cr.location,
+      cr.status,
+      cr.serviceAccount,
+      AuditInfo(
+        cr.creator,
+        cr.createdDate,
+        unmarshalDestroyedDate(cr.destroyedDate),
+        cr.dateAccessed
+      ),
+      (cr.apiServerIp, unmarshalNetwork(cr)) match {
+        case (Some(apiServerIp), Some(networkFields)) => Some(KubernetesClusterAsyncFields(apiServerIp, networkFields))
+        case _                                        => None
+      },
+      namespaces,
+      nodepools,
+      List()
+    )
 
   private[db] def findByIdQuery(
     id: KubernetesClusterLeoId
@@ -179,7 +212,13 @@ object kubernetesClusterQuery extends TableQuery(new KubernetesClusterTable(_)) 
 
 case class KubernetesAppCreationException(message: String) extends Exception
 
-case class SaveKubernetesCluster(googleProject: GoogleProject, clusterName: KubernetesClusterName, location: Location, status: KubernetesClusterStatus, serviceAccount: WorkbenchEmail, auditInfo: AuditInfo, dummyNodepool: Nodepool) {
+case class SaveKubernetesCluster(googleProject: GoogleProject,
+                                 clusterName: KubernetesClusterName,
+                                 location: Location,
+                                 status: KubernetesClusterStatus,
+                                 serviceAccount: WorkbenchEmail,
+                                 auditInfo: AuditInfo,
+                                 dummyNodepool: Nodepool) {
   def toClusterRecord(): KubernetesClusterRecord =
     KubernetesClusterRecord(
       KubernetesClusterLeoId(0),

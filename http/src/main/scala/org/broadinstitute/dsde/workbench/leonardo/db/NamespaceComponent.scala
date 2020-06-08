@@ -8,9 +8,7 @@ import slick.lifted.Tag
 
 import scala.concurrent.ExecutionContext
 
-case class NamespaceRecord(id: NamespaceId,
-                           clusterId: KubernetesClusterLeoId,
-                           namespaceName: NamespaceName)
+case class NamespaceRecord(id: NamespaceId, clusterId: KubernetesClusterLeoId, namespaceName: NamespaceName)
 
 class NamespaceTable(tag: Tag) extends Table[NamespaceRecord](tag, "NAMESPACE") {
   def id = column[NamespaceId]("id", O.PrimaryKey, O.AutoInc)
@@ -60,8 +58,7 @@ object namespaceQuery extends TableQuery(new NamespaceTable(_)) {
     namespaceQuery
       .filter(_.clusterId === clusterId)
       .result
-      .map(rowOpt => rowOpt.map(row => Namespace(row.id, row.namespaceName))
-      .toList)
+      .map(rowOpt => rowOpt.map(row => Namespace(row.id, row.namespaceName)).toList)
 
   private[db] def unmarshalNamespace(rec: NamespaceRecord): Namespace =
     Namespace(rec.id, rec.namespaceName)

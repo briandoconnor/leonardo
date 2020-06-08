@@ -18,9 +18,29 @@ import org.broadinstitute.dsde.workbench.leonardo._
 import org.broadinstitute.dsde.workbench.leonardo.api.HttpRoutesSpec._
 import org.broadinstitute.dsde.workbench.leonardo.db.TestComponent
 import org.broadinstitute.dsde.workbench.leonardo.http.api.RoutesTestJsonSupport.runtimeConfigRequestEncoder
-import org.broadinstitute.dsde.workbench.leonardo.http.api.{CreateDiskRequest, CreateRuntime2Request, GetPersistentDiskResponse, HttpRoutes, ListPersistentDiskResponse, ListRuntimeResponse2, TestLeoRoutes, UpdateDiskRequest, UpdateRuntimeConfigRequest, UpdateRuntimeRequest}
-import org.broadinstitute.dsde.workbench.leonardo.http.service.{GetAppResponse, GetRuntimeResponse, ListAppResponse, RuntimeConfigRequest}
-import org.broadinstitute.dsde.workbench.leonardo.service.{MockDiskServiceInterp, MockKubernetesServiceInterp, MockRuntimeServiceInterp}
+import org.broadinstitute.dsde.workbench.leonardo.http.api.{
+  CreateDiskRequest,
+  CreateRuntime2Request,
+  GetPersistentDiskResponse,
+  HttpRoutes,
+  ListPersistentDiskResponse,
+  ListRuntimeResponse2,
+  TestLeoRoutes,
+  UpdateDiskRequest,
+  UpdateRuntimeConfigRequest,
+  UpdateRuntimeRequest
+}
+import org.broadinstitute.dsde.workbench.leonardo.http.service.{
+  GetAppResponse,
+  GetRuntimeResponse,
+  ListAppResponse,
+  RuntimeConfigRequest
+}
+import org.broadinstitute.dsde.workbench.leonardo.service.{
+  MockDiskServiceInterp,
+  MockKubernetesServiceInterp,
+  MockRuntimeServiceInterp
+}
 import org.broadinstitute.dsde.workbench.model.WorkbenchEmail
 import org.broadinstitute.dsde.workbench.model.google.{GcsBucketName, GcsObjectName, GcsPath, GoogleProject}
 import org.scalatest.concurrent.ScalaFutures
@@ -268,7 +288,7 @@ class HttpRoutesSpec
     }
   }
 
-  "Kubernetes Routes" should "create an app"  in {
+  "Kubernetes Routes" should "create an app" in {
     Post("/api/google/v1/app/googleProject1/app1")
       .withEntity(ContentTypes.`application/json`, createAppRequest.asJson.spaces2) ~> routes.route ~> check {
       status shouldEqual StatusCodes.Accepted
@@ -321,7 +341,15 @@ class HttpRoutesSpec
 
   it should "validate create app request" in {
     Post("/api/google/v1/app/googleProject1/app1")
-      .withEntity(ContentTypes.`application/json`, createAppRequest.copy(kubernetesRuntimeConfig = createAppRequest.kubernetesRuntimeConfig.map(c => c.copy(numNodes = NumNodes(-1)))).asJson.spaces2) ~> routes.route ~> check {
+      .withEntity(
+        ContentTypes.`application/json`,
+        createAppRequest
+          .copy(kubernetesRuntimeConfig =
+            createAppRequest.kubernetesRuntimeConfig.map(c => c.copy(numNodes = NumNodes(-1)))
+          )
+          .asJson
+          .spaces2
+      ) ~> routes.route ~> check {
       handled shouldBe false
     }
   }

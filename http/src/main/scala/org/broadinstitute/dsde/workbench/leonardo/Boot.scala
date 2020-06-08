@@ -10,19 +10,33 @@ import cats.effect.{Blocker, ConcurrentEffect, ContextShift, ExitCode, IO, IOApp
 import cats.implicits._
 import fs2.Stream
 import com.typesafe.sslconfig.akka.util.AkkaLoggerFactory
-import com.typesafe.sslconfig.ssl.{ConfigSSLContextBuilder, DefaultKeyManagerFactoryWrapper, DefaultTrustManagerFactoryWrapper, SSLConfigFactory}
+import com.typesafe.sslconfig.ssl.{
+  ConfigSSLContextBuilder,
+  DefaultKeyManagerFactoryWrapper,
+  DefaultTrustManagerFactoryWrapper,
+  SSLConfigFactory
+}
 import fs2.concurrent.InspectableQueue
 import io.chrisdavenport.log4cats.StructuredLogger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import javax.net.ssl.SSLContext
 import org.broadinstitute.dsde.workbench.google.GoogleCredentialModes.{Json, Token}
-import org.broadinstitute.dsde.workbench.google2.{
-  GoogleDataprocService,
-  GoogleDiskService
-}
+import org.broadinstitute.dsde.workbench.google2.{GoogleDataprocService, GoogleDiskService}
 import org.broadinstitute.dsde.workbench.leonardo.AsyncTaskProcessor.Task
-import org.broadinstitute.dsde.workbench.google.{GoogleStorageDAO, HttpGoogleDirectoryDAO, HttpGoogleIamDAO, HttpGoogleProjectDAO, HttpGoogleStorageDAO}
-import org.broadinstitute.dsde.workbench.google2.{Event, GoogleComputeService, GooglePublisher, GoogleStorageService, GoogleSubscriber}
+import org.broadinstitute.dsde.workbench.google.{
+  GoogleStorageDAO,
+  HttpGoogleDirectoryDAO,
+  HttpGoogleIamDAO,
+  HttpGoogleProjectDAO,
+  HttpGoogleStorageDAO
+}
+import org.broadinstitute.dsde.workbench.google2.{
+  Event,
+  GoogleComputeService,
+  GooglePublisher,
+  GoogleStorageService,
+  GoogleSubscriber
+}
 import org.broadinstitute.dsde.workbench.leonardo.auth.sam.{PetClusterServiceAccountProvider, SamAuthProvider}
 import org.broadinstitute.dsde.workbench.leonardo.config.Config._
 import org.broadinstitute.dsde.workbench.leonardo.dao._
@@ -144,7 +158,11 @@ object Boot extends IOApp {
 
       val zombieClusterMonitor = ZombieRuntimeMonitor[IO](zombieRuntimeMonitorConfig, appDependencies.googleProjectDAO)
 
-      val leoKubernetesService: LeoKubernetesServiceInterp[IO] = new LeoKubernetesServiceInterp(appDependencies.authProvider, appDependencies.serviceAccountProvider, leoKubernetesConfig, appDependencies.publisherQueue)
+      val leoKubernetesService: LeoKubernetesServiceInterp[IO] =
+        new LeoKubernetesServiceInterp(appDependencies.authProvider,
+                                       appDependencies.serviceAccountProvider,
+                                       leoKubernetesConfig,
+                                       appDependencies.publisherQueue)
 
       val httpRoutes = new HttpRoutes(swaggerConfig,
                                       statusService,
@@ -152,7 +170,7 @@ object Boot extends IOApp {
                                       leonardoService,
                                       runtimeService,
                                       diskService,
-        leoKubernetesService,
+                                      leoKubernetesService,
                                       StandardUserInfoDirectives,
                                       contentSecurityPolicy)
       val httpServer = for {

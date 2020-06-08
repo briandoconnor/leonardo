@@ -33,7 +33,7 @@ class KubernetesClusterComponentSpec extends FlatSpecLike with TestComponent {
       kubernetesClusterQuery.getMinimalActiveClusterByName(savedCluster1.googleProject)
     ) shouldEqual Some(savedCluster1)
     dbFutureValue(
-     kubernetesClusterQuery.getMinimalActiveClusterByName(savedCluster2.googleProject)
+      kubernetesClusterQuery.getMinimalActiveClusterByName(savedCluster2.googleProject)
     ) shouldEqual Some(savedCluster2)
 
     //should delete the cluster and initial nodepool, hence '2' records updated
@@ -41,7 +41,8 @@ class KubernetesClusterComponentSpec extends FlatSpecLike with TestComponent {
     dbFutureValue(kubernetesClusterQuery.markAsDeleted(savedCluster1.id, now)) shouldBe 2
     dbFutureValue(kubernetesClusterQuery.markAsDeleted(savedCluster2.id, now)) shouldBe 2
 
-    val getDeletedCluster1 = dbFutureValue(kubernetesClusterQuery.getMinimalClusterById(savedCluster1.id, includeDeletedNodepool = true))
+    val getDeletedCluster1 =
+      dbFutureValue(kubernetesClusterQuery.getMinimalClusterById(savedCluster1.id, includeDeletedNodepool = true))
     getDeletedCluster1.map(_.status) shouldEqual Some(KubernetesClusterStatus.Deleted)
     getDeletedCluster1.map(_.auditInfo.destroyedDate) shouldEqual Some(Some(now))
     getDeletedCluster1.map(_.nodepools.map(_.status)) shouldEqual Some(

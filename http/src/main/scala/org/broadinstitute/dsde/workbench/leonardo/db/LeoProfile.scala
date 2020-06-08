@@ -7,12 +7,18 @@ import io.circe.Printer
 import io.circe.syntax._
 import org.broadinstitute.dsde.workbench.google2.{DiskName, ZoneName}
 import org.broadinstitute.dsde.workbench.google2.GKEModels.{KubernetesClusterName, NodepoolName}
-import org.broadinstitute.dsde.workbench.google2.KubernetesModels.{KubernetesApiServerIp, PortName, PortNum, Protocol, TargetPortNum}
+import org.broadinstitute.dsde.workbench.google2.KubernetesModels.{
+  KubernetesApiServerIp,
+  PortName,
+  PortNum,
+  Protocol,
+  TargetPortNum
+}
 import org.broadinstitute.dsde.workbench.google2.KubernetesSerializableName.{NamespaceName, ServiceName}
 import org.broadinstitute.dsde.workbench.google2.{Location, MachineTypeName, NetworkName, SubnetworkName}
 import org.broadinstitute.dsde.workbench.leonardo.SamResource.PersistentDiskSamResource
 import org.broadinstitute.dsde.workbench.model.WorkbenchEmail
-import org.broadinstitute.dsde.workbench.model.google.{GcsPath, GoogleProject, parseGcsPath}
+import org.broadinstitute.dsde.workbench.model.google.{parseGcsPath, GcsPath, GoogleProject}
 import slick.jdbc.MySQLProfile
 import slick.jdbc.MySQLProfile.api._
 
@@ -112,7 +118,10 @@ private[leonardo] object LeoProfile extends MySQLProfile {
     implicit val kubernetesClusterLeoIdColumnType: BaseColumnType[KubernetesClusterLeoId] =
       MappedColumnType.base[KubernetesClusterLeoId, Long](_.id, KubernetesClusterLeoId.apply)
     implicit val kubernetesStatusColumnType: BaseColumnType[KubernetesClusterStatus] =
-      MappedColumnType.base[KubernetesClusterStatus, String](_.toString, s => KubernetesClusterStatus.stringToObject.getOrElse(s, throw new Exception(s"invalid cluster status ${s}")))
+      MappedColumnType.base[KubernetesClusterStatus, String](
+        _.toString,
+        s => KubernetesClusterStatus.stringToObject.getOrElse(s, throw new Exception(s"invalid cluster status ${s}"))
+      )
     implicit val kubernetesClusterNameColumnType: BaseColumnType[KubernetesClusterName] =
       MappedColumnType.base[KubernetesClusterName, String](_.value, KubernetesClusterName.apply)
     implicit val operationNameColumnType: BaseColumnType[OperationName] =
@@ -128,7 +137,6 @@ private[leonardo] object LeoProfile extends MySQLProfile {
       MappedColumnType.base[SubnetworkName, String](_.value, SubnetworkName.apply)
     implicit val ipRange: BaseColumnType[IpRange] =
       MappedColumnType.base[IpRange, String](_.value, IpRange.apply)
-
 
     implicit val kubernetesNamespaceIdColumnType: BaseColumnType[NamespaceId] =
       MappedColumnType.base[NamespaceId, Long](_.id, NamespaceId.apply)
@@ -146,7 +154,10 @@ private[leonardo] object LeoProfile extends MySQLProfile {
     implicit val autoscalingMaxColumnType: BaseColumnType[AutoscalingMax] =
       MappedColumnType.base[AutoscalingMax, Int](_.amount, AutoscalingMax.apply)
     implicit val nodepoolStatusColumnType: BaseColumnType[NodepoolStatus] =
-      MappedColumnType.base[NodepoolStatus, String](_.toString, s => NodepoolStatus.stringToObject.getOrElse(s, throw ColumnDecodingException(s"invalid nodepool status ${s}")))
+      MappedColumnType.base[NodepoolStatus, String](
+        _.toString,
+        s => NodepoolStatus.stringToObject.getOrElse(s, throw ColumnDecodingException(s"invalid nodepool status ${s}"))
+      )
 
     implicit val appIdColumnType: BaseColumnType[AppId] =
       MappedColumnType.base[AppId, Long](_.id, AppId.apply)
@@ -155,9 +166,15 @@ private[leonardo] object LeoProfile extends MySQLProfile {
     implicit val appSamResourceIdColumnType: BaseColumnType[AppSamResourceId] =
       MappedColumnType.base[AppSamResourceId, String](_.resourceId, AppSamResourceId.apply)
     implicit val appTypeColumnType: BaseColumnType[AppType] =
-     MappedColumnType.base[AppType, String](_.toString, s => AppType.stringToObject.getOrElse(s, throw ColumnDecodingException(s"invalid app type ${s}")))
+      MappedColumnType.base[AppType, String](
+        _.toString,
+        s => AppType.stringToObject.getOrElse(s, throw ColumnDecodingException(s"invalid app type ${s}"))
+      )
     implicit val appStatusColumnType: BaseColumnType[AppStatus] =
-      MappedColumnType.base[AppStatus, String](_.toString, s => AppStatus.stringToObject.getOrElse(s, throw ColumnDecodingException(s"invalid app status ${s}")))
+      MappedColumnType.base[AppStatus, String](
+        _.toString,
+        s => AppStatus.stringToObject.getOrElse(s, throw ColumnDecodingException(s"invalid app status ${s}"))
+      )
 
     implicit val serviceIdColumnType: BaseColumnType[ServiceId] =
       MappedColumnType.base[ServiceId, Long](_.id, ServiceId.apply)

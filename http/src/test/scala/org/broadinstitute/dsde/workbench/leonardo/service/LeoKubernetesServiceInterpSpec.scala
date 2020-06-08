@@ -2,12 +2,36 @@ package org.broadinstitute.dsde.workbench.leonardo.service
 
 import cats.effect.IO
 import org.broadinstitute.dsde.workbench.google2.DiskName
-import org.broadinstitute.dsde.workbench.leonardo.http.service.{AppAlreadyExistsException, AppCannotBeDeletedException, AppNotFoundException, AppRequiresDiskException, DiskAlreadyAttachedException, DiskNotFoundException, LeoKubernetesServiceInterp, PersistentDiskAlreadyExistsException}
+import org.broadinstitute.dsde.workbench.leonardo.http.service.{
+  AppAlreadyExistsException,
+  AppCannotBeDeletedException,
+  AppNotFoundException,
+  AppRequiresDiskException,
+  DiskAlreadyAttachedException,
+  DiskNotFoundException,
+  LeoKubernetesServiceInterp,
+  PersistentDiskAlreadyExistsException
+}
 import org.broadinstitute.dsde.workbench.leonardo.util.QueueFactory
 import org.broadinstitute.dsde.workbench.leonardo.CommonTestData._
 import org.broadinstitute.dsde.workbench.leonardo.KubernetesTestData._
-import org.broadinstitute.dsde.workbench.leonardo.{AppName, AppStatus, AppType, DiskId, KubernetesClusterStatus, LabelMap, LeonardoTestSuite, NodepoolStatus}
-import org.broadinstitute.dsde.workbench.leonardo.db.{KubernetesServiceDbQueries, TestComponent, appQuery, kubernetesClusterQuery, persistentDiskQuery}
+import org.broadinstitute.dsde.workbench.leonardo.{
+  AppName,
+  AppStatus,
+  AppType,
+  DiskId,
+  KubernetesClusterStatus,
+  LabelMap,
+  LeonardoTestSuite,
+  NodepoolStatus
+}
+import org.broadinstitute.dsde.workbench.leonardo.db.{
+  appQuery,
+  kubernetesClusterQuery,
+  persistentDiskQuery,
+  KubernetesServiceDbQueries,
+  TestComponent
+}
 import org.broadinstitute.dsde.workbench.leonardo.http.api.DiskConfigRequest
 import org.broadinstitute.dsde.workbench.model.google.GoogleProject
 import org.scalatest.FlatSpec
@@ -17,10 +41,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class LeoKubernetesServiceInterpSpec extends FlatSpec with LeonardoTestSuite with TestComponent {
   val publisherQueue = QueueFactory.makePublisherQueue()
   val kubeServiceInterp = new LeoKubernetesServiceInterp[IO](whitelistAuthProvider,
-    serviceAccountProvider,
-    leoKubernetesConfig,
-    publisherQueue
-  )
+                                                             serviceAccountProvider,
+                                                             leoKubernetesConfig,
+                                                             publisherQueue)
 
   it should "create an app and a new disk" in isolatedDbTest {
     val appName = AppName("app1")
@@ -107,7 +130,7 @@ class LeoKubernetesServiceInterpSpec extends FlatSpec with LeonardoTestSuite wit
     appResult.map(_.app.appName) shouldEqual Some(appName1)
 
     //we need to update status from creating because we don't allow creation of apps while cluster is creating
-    dbFutureValue { kubernetesClusterQuery.updateStatus(appResult.get.cluster.id, KubernetesClusterStatus.Running) }
+    dbFutureValue(kubernetesClusterQuery.updateStatus(appResult.get.cluster.id, KubernetesClusterStatus.Running))
 
     the[DiskAlreadyAttachedException] thrownBy {
       kubeServiceInterp.createApp(userInfo, project, appName2, appReq).unsafeRunSync()
@@ -149,9 +172,9 @@ class LeoKubernetesServiceInterpSpec extends FlatSpec with LeonardoTestSuite wit
     }
 
     //we can't delete while its creating, so set it to Running
-    dbFutureValue { appQuery.updateStatus(appResultPreStatusUpdate.get.app.id, AppStatus.Running) }
+    dbFutureValue(appQuery.updateStatus(appResultPreStatusUpdate.get.app.id, AppStatus.Running))
 
-    val appResultPreDelete =  dbFutureValue {
+    val appResultPreDelete = dbFutureValue {
       KubernetesServiceDbQueries.getActiveFullAppByName(project, appName)
     }
     appResultPreDelete.get.app.status shouldEqual AppStatus.Running
@@ -204,7 +227,7 @@ class LeoKubernetesServiceInterpSpec extends FlatSpec with LeonardoTestSuite wit
     val appResult = dbFutureValue {
       KubernetesServiceDbQueries.getActiveFullAppByName(project, appName1)
     }
-    dbFutureValue { kubernetesClusterQuery.updateStatus(appResult.get.cluster.id, KubernetesClusterStatus.Running) }
+    dbFutureValue(kubernetesClusterQuery.updateStatus(appResult.get.cluster.id, KubernetesClusterStatus.Running))
 
     kubeServiceInterp.createApp(userInfo, project, appName2, appReq2).unsafeRunSync()
     kubeServiceInterp.createApp(userInfo, project2, appName3, appReq1).unsafeRunSync()
@@ -214,7 +237,8 @@ class LeoKubernetesServiceInterpSpec extends FlatSpec with LeonardoTestSuite wit
     listAllApps.map(_.appName) should contain(appName1)
     listAllApps.map(_.appName) should contain(appName2)
     listAllApps.map(_.appName) should contain(appName3)
-    listAllApps.map(_.diskName).sortBy(_.get.value) shouldBe Vector(Some(diskName), Some(diskName), Some(diskName2)).sortBy(_.get.value)
+    listAllApps.map(_.diskName).sortBy(_.get.value) shouldBe Vector(Some(diskName), Some(diskName), Some(diskName2))
+      .sortBy(_.get.value)
 
     val listProject1Apps = kubeServiceInterp.listApp(userInfo, Some(project), Map()).unsafeRunSync()
     listProject1Apps.length shouldBe 2
@@ -225,7 +249,8 @@ class LeoKubernetesServiceInterpSpec extends FlatSpec with LeonardoTestSuite wit
     listProject2Apps.length shouldBe 1
     listProject2Apps.map(_.appName) should contain(appName3)
 
-    val listProject3Apps = kubeServiceInterp.listApp(userInfo, Some(GoogleProject("fakeProject")), Map()).unsafeRunSync()
+    val listProject3Apps =
+      kubeServiceInterp.listApp(userInfo, Some(GoogleProject("fakeProject")), Map()).unsafeRunSync()
     listProject3Apps.length shouldBe 0
   }
 
@@ -248,7 +273,7 @@ class LeoKubernetesServiceInterpSpec extends FlatSpec with LeonardoTestSuite wit
       KubernetesServiceDbQueries.getActiveFullAppByName(project, appName1)
     }
 
-    dbFutureValue { kubernetesClusterQuery.updateStatus(app1Result.get.cluster.id, KubernetesClusterStatus.Running) }
+    dbFutureValue(kubernetesClusterQuery.updateStatus(app1Result.get.cluster.id, KubernetesClusterStatus.Running))
 
     kubeServiceInterp.createApp(userInfo, project, appName2, appReq2).unsafeRunSync()
 
@@ -288,13 +313,15 @@ class LeoKubernetesServiceInterpSpec extends FlatSpec with LeonardoTestSuite wit
     val appResult = dbFutureValue {
       KubernetesServiceDbQueries.getActiveFullAppByName(project, appName1)
     }
-    dbFutureValue { kubernetesClusterQuery.updateStatus(appResult.get.cluster.id, KubernetesClusterStatus.Running) }
+    dbFutureValue(kubernetesClusterQuery.updateStatus(appResult.get.cluster.id, KubernetesClusterStatus.Running))
 
     kubeServiceInterp.createApp(userInfo, project, appName2, appReq2).unsafeRunSync()
 
     val diskName3 = DiskName("newDiskName2")
     val createDiskConfig3 = DiskConfigRequest.Create(diskName3, None, None, None, Map.empty)
-    kubeServiceInterp.createApp(userInfo, project2, appName3, appReq1.copy(diskConfig = Some(createDiskConfig3))).unsafeRunSync()
+    kubeServiceInterp
+      .createApp(userInfo, project2, appName3, appReq1.copy(diskConfig = Some(createDiskConfig3)))
+      .unsafeRunSync()
 
     val getApp1 = kubeServiceInterp.getApp(userInfo, project, appName1).unsafeRunSync()
     getApp1.diskName shouldBe Some(diskName)

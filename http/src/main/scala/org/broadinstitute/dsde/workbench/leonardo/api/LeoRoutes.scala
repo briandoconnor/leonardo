@@ -65,7 +65,6 @@ class LeoRoutes(
             }
           } ~
             pathPrefix(Segment / Segment) { (googleProject, clusterNameString) =>
-
               validateNameDirective(clusterNameString, RuntimeName.apply) { clusterName =>
                 pathEndOrSingleSlash {
                   put {
@@ -165,20 +164,18 @@ object LeoRoutes {
         )
     }
 
-  def validateKubernetesName[A](nameString: String, apply: String => A): Directive1[A] = {
+  def validateKubernetesName[A](nameString: String, apply: String => A): Directive1[A] =
     Directive { inner =>
       KubernetesName.withValidation(nameString, apply) match {
-        case Left(e) => failWith(e)
+        case Left(e)  => failWith(e)
         case Right(c) => inner(Tuple1(c))
       }
     }
-  }
-
 
   def validateNameDirective[A](clusterNameString: String, apply: String => A): Directive1[A] =
     Directive { inner =>
       validateName(clusterNameString) match {
-        case Left(e) => failWith(e)
+        case Left(e)  => failWith(e)
         case Right(c) => inner(Tuple1(apply(c)))
       }
     }

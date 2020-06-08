@@ -301,43 +301,41 @@ object GetRuntimeResponse {
   )
 }
 
-  final case class CreateAppRequest(kubernetesRuntimeConfig: Option[KubernetesRuntimeConfig],
-                                    appType: AppType,
-                                    diskConfig: Option[DiskConfigRequest],
-                                    labels: LabelMap = Map.empty)
+final case class CreateAppRequest(kubernetesRuntimeConfig: Option[KubernetesRuntimeConfig],
+                                  appType: AppType,
+                                  diskConfig: Option[DiskConfigRequest],
+                                  labels: LabelMap = Map.empty)
 
+final case class GetAppResponse(kubernetesRuntimeConfig: KubernetesRuntimeConfig,
+                                errors: List[KubernetesError],
+                                status: AppStatus, //TODO: do we need some sort of aggregate status?
+                                proxyUrls: Map[ServiceName, URL],
+                                diskName: Option[DiskName])
 
-  final case class GetAppResponse(kubernetesRuntimeConfig: KubernetesRuntimeConfig,
-                                  errors: List[KubernetesError],
-                                  status: AppStatus, //TODO: do we need some sort of aggregate status?
-                                  proxyUrls: Map[ServiceName, URL],
-                                  diskName: Option[DiskName]
-                                  )
-
-  object GetAppResponse {
-    def fromDbResult(appResult: GetAppResult): GetAppResponse =  {
-      val errors =  appResult.cluster.errors ++ appResult.nodepool.errors ++ appResult.app.errors
-      GetAppResponse(
-        KubernetesRuntimeConfig(
-          appResult.nodepool.numNodes,
-          appResult.nodepool.machineType,
-          appResult.nodepool.autoscalingEnabled
-        ),
-        errors,
-        if (errors.isEmpty) appResult.app.status else AppStatus.Error,
-        Map.empty, //TODO: Implement when proxy functionality exists
-        appResult.app.appResources.disk.map(_.name)
-      )
-    }
+object GetAppResponse {
+  def fromDbResult(appResult: GetAppResult): GetAppResponse = {
+    val errors = appResult.cluster.errors ++ appResult.nodepool.errors ++ appResult.app.errors
+    GetAppResponse(
+      KubernetesRuntimeConfig(
+        appResult.nodepool.numNodes,
+        appResult.nodepool.machineType,
+        appResult.nodepool.autoscalingEnabled
+      ),
+      errors,
+      if (errors.isEmpty) appResult.app.status else AppStatus.Error,
+      Map.empty, //TODO: Implement when proxy functionality exists
+      appResult.app.appResources.disk.map(_.name)
+    )
   }
+}
 
-  final case class ListAppResponse(googleProject: GoogleProject,
-                                   kubernetesRuntimeConfig: KubernetesRuntimeConfig,
-                                   errors: List[KubernetesError],
-                                   status: AppStatus, //TODO: do we need some sort of aggregate status?
-                                   proxyUrls: Map[ServiceName, URL],
-                                   appName: AppName,
-                                   diskName: Option[DiskName])
+final case class ListAppResponse(googleProject: GoogleProject,
+                                 kubernetesRuntimeConfig: KubernetesRuntimeConfig,
+                                 errors: List[KubernetesError],
+                                 status: AppStatus, //TODO: do we need some sort of aggregate status?
+                                 proxyUrls: Map[ServiceName, URL],
+                                 appName: AppName,
+                                 diskName: Option[DiskName])
 
 object ListAppResponse {
   def fromCluster(c: KubernetesCluster): List[ListAppResponse] =
@@ -358,7 +356,6 @@ object ListAppResponse {
           a.appResources.disk.map(_.name)
         )
       }
-     )
+    )
 
 }
-

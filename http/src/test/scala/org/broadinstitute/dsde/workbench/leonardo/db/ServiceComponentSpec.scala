@@ -15,11 +15,11 @@ class ServiceComponentSpec extends FlatSpecLike with TestComponent {
     val savedApp2 = makeApp(2, savedNodepool1.id).save()
 
     val service1 = makeService(1)
-    val savedService1 = dbFutureValue { serviceQuery.saveForApp(savedApp1.id, service1) }
+    val savedService1 = dbFutureValue(serviceQuery.saveForApp(savedApp1.id, service1))
     val service2 = makeService(2)
-    val savedService2 = dbFutureValue { serviceQuery.saveForApp(savedApp1.id, service2) }
+    val savedService2 = dbFutureValue(serviceQuery.saveForApp(savedApp1.id, service2))
     val service3 = makeService(3)
-    val savedService3 = dbFutureValue { serviceQuery.saveForApp(savedApp2.id, service3) }
+    val savedService3 = dbFutureValue(serviceQuery.saveForApp(savedApp2.id, service3))
 
     service1 shouldEqual savedService1
     service2 shouldEqual savedService2
@@ -33,7 +33,7 @@ class ServiceComponentSpec extends FlatSpecLike with TestComponent {
 
     val service1 = makeService(1)
     val serviceToSave = service1.copy(config = service1.config.copy(ports = List()))
-    val savedService1 = dbFutureValue { serviceQuery.saveForApp(savedApp1.id, serviceToSave ) }
+    val savedService1 = dbFutureValue(serviceQuery.saveForApp(savedApp1.id, serviceToSave))
 
     serviceToSave shouldEqual savedService1
   }

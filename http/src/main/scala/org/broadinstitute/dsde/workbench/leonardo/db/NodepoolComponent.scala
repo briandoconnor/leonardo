@@ -7,11 +7,11 @@ import org.broadinstitute.dsde.workbench.leonardo.{App}
 import org.broadinstitute.dsde.workbench.google2.MachineTypeName
 import org.broadinstitute.dsde.workbench.leonardo.{
   AuditInfo,
+  AutoscalingConfig,
   AutoscalingMax,
   AutoscalingMin,
   KubernetesClusterLeoId,
   Nodepool,
-  AutoscalingConfig,
   NodepoolLeoId,
   NodepoolStatus,
   NumNodes
@@ -24,19 +24,19 @@ import org.broadinstitute.dsde.workbench.leonardo.db.LeoProfile.{dummyDate, unma
 import scala.concurrent.ExecutionContext
 
 case class NodepoolRecord(
-                           id: NodepoolLeoId,
-                           clusterId: KubernetesClusterLeoId,
-                           nodepoolName: NodepoolName,
-                           status: NodepoolStatus,
-                           creator: WorkbenchEmail,
-                           createdDate: Instant,
-                           destroyedDate: Instant,
-                           dateAccessed: Instant,
-                           machineType: MachineTypeName,
-                           numNodes: NumNodes,
-                           autoscalingEnabled: Boolean,
-                           autoscalingMin: Option[AutoscalingMin],
-                           autoscalingMax: Option[AutoscalingMax],
+  id: NodepoolLeoId,
+  clusterId: KubernetesClusterLeoId,
+  nodepoolName: NodepoolName,
+  status: NodepoolStatus,
+  creator: WorkbenchEmail,
+  createdDate: Instant,
+  destroyedDate: Instant,
+  dateAccessed: Instant,
+  machineType: MachineTypeName,
+  numNodes: NumNodes,
+  autoscalingEnabled: Boolean,
+  autoscalingMin: Option[AutoscalingMin],
+  autoscalingMax: Option[AutoscalingMax]
 )
 
 class NodepoolTable(tag: Tag) extends Table[NodepoolRecord](tag, "NODEPOOL") {
@@ -128,14 +128,13 @@ object nodepoolQuery extends TableQuery(new NodepoolTable(_)) {
   // will not return any apps associated with the nodepool
   private[db] def getMinimalById(id: NodepoolLeoId)(implicit ec: ExecutionContext): DBIO[Option[Nodepool]] =
     for {
-    nodepools <- findByNodepoolIdQuery(id).result
+      nodepools <- findByNodepoolIdQuery(id).result
     } yield nodepools.map(rec => unmarshalNodepool(rec, List())).headOption
 
   private[db] def pendingDeletionFromQuery(baseQuery: Query[NodepoolTable, NodepoolRecord, Seq]): DBIO[Int] =
     baseQuery
       .map(_.status)
       .update(NodepoolStatus.Deleting)
-
 
   private[db] def unmarshalNodepool(rec: NodepoolRecord, apps: List[App]): Nodepool =
     Nodepool(

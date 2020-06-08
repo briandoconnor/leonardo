@@ -15,7 +15,12 @@ import akka.stream.scaladsl.Sink
 import cats.effect.{ContextShift, IO, Timer}
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.workbench.leonardo.config.SwaggerConfig
-import org.broadinstitute.dsde.workbench.leonardo.http.service.{LeonardoService, ProxyService, RuntimeService, StatusService}
+import org.broadinstitute.dsde.workbench.leonardo.http.service.{
+  LeonardoService,
+  ProxyService,
+  RuntimeService,
+  StatusService
+}
 import org.broadinstitute.dsde.workbench.leonardo.model.{LeoException, RequestValidationError}
 import org.broadinstitute.dsde.workbench.leonardo.service.LeoKubernetesService
 import org.broadinstitute.dsde.workbench.model.ErrorReportJsonSupport._

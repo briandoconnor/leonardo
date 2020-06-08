@@ -7,5 +7,3 @@ case class GalaxyNodepoolConfig(machineType: MachineTypeName,
                                 numNodes: NumNodes,
                                 autoscalingEnabled: Boolean,
                                 autoscalingConfig: AutoscalingConfig)
-
-

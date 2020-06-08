@@ -1,7 +1,14 @@
 package org.broadinstitute.dsde.workbench.leonardo
 
 import org.broadinstitute.dsde.workbench.google2.GKEModels.{KubernetesClusterName, NodepoolName}
-import org.broadinstitute.dsde.workbench.google2.KubernetesModels.{KubernetesApiServerIp, PortName, PortNum, Protocol, ServicePort, TargetPortNum}
+import org.broadinstitute.dsde.workbench.google2.KubernetesModels.{
+  KubernetesApiServerIp,
+  PortName,
+  PortNum,
+  Protocol,
+  ServicePort,
+  TargetPortNum
+}
 import org.broadinstitute.dsde.workbench.google2.KubernetesSerializableName.{NamespaceName, ServiceName}
 import org.broadinstitute.dsde.workbench.google2.{Location, MachineTypeName}
 import org.broadinstitute.dsde.workbench.leonardo.CommonTestData._
@@ -32,7 +39,7 @@ object KubernetesTestData {
   val serviceKind = KubernetesServiceKindName("ClusterIP")
   val protocol = Protocol("TCP")
 
-  val kubernetesRuntimeConfig =  KubernetesRuntimeConfig(
+  val kubernetesRuntimeConfig = KubernetesRuntimeConfig(
     NumNodes(2),
     MachineTypeName("n1-standard-4"),
     true
@@ -50,13 +57,16 @@ object KubernetesTestData {
   val testApp = makeApp(1, testNodepool.id)
 
   val getAppResponse =
-    GetAppResponse.fromDbResult(GetAppResult(
-      testCluster,
-      testNodepool,
-      testApp
-    ))
+    GetAppResponse.fromDbResult(
+      GetAppResult(
+        testCluster,
+        testNodepool,
+        testApp
+      )
+    )
 
-  val listAppResponse = ListAppResponse.fromCluster(testCluster.copy(nodepools = List(testNodepool.copy(apps = List(testApp))))).toVector
+  val listAppResponse =
+    ListAppResponse.fromCluster(testCluster.copy(nodepools = List(testNodepool.copy(apps = List(testApp))))).toVector
 
   def makeNodepool(index: Int, clusterId: KubernetesClusterLeoId, prefix: String = "") = {
     val name = NodepoolName(prefix + "nodepoolname" + index)
@@ -78,7 +88,19 @@ object KubernetesTestData {
   def makeKubeCluster(index: Int): KubernetesCluster = {
     val name = KubernetesClusterName("kubecluster" + index)
     val uniqueProject = GoogleProject(project.value + index)
-    KubernetesCluster(KubernetesClusterLeoId(-1), uniqueProject, name, location, KubernetesClusterStatus.StatusUnspecified, serviceAccountEmail, auditInfo, None, List(), List(makeNodepool(index, KubernetesClusterLeoId(-1), "cluster")), List())
+    KubernetesCluster(
+      KubernetesClusterLeoId(-1),
+      uniqueProject,
+      name,
+      location,
+      KubernetesClusterStatus.StatusUnspecified,
+      serviceAccountEmail,
+      auditInfo,
+      None,
+      List(),
+      List(makeNodepool(index, KubernetesClusterLeoId(-1), "cluster")),
+      List()
+    )
   }
 
   def makeNamespace(index: Int, prefix: String = ""): Namespace = {
@@ -89,17 +111,28 @@ object KubernetesTestData {
   def makeApp(index: Int, nodepoolId: NodepoolLeoId): App = {
     val name = AppName("app" + index)
     val namespace = makeNamespace(index, "app")
-    App(AppId(-1), nodepoolId, galaxyApp, name, AppStatus.StatusUnspecified, appSamId, auditInfo, Map.empty, AppResources(
-      namespace,
-      None,
-      List.empty
-    ),
-      List.empty)
+    App(AppId(-1),
+        nodepoolId,
+        galaxyApp,
+        name,
+        AppStatus.StatusUnspecified,
+        appSamId,
+        auditInfo,
+        Map.empty,
+        AppResources(
+          namespace,
+          None,
+          List.empty
+        ),
+        List.empty)
   }
 
   def makeService(index: Int): KubernetesService = {
     val name = ServiceName("service" + index)
-    KubernetesService(ServiceId(-1), ServiceConfig(name, serviceKind, List(makeRandomPort(index.toString), makeRandomPort("0" + index))))
+    KubernetesService(
+      ServiceId(-1),
+      ServiceConfig(name, serviceKind, List(makeRandomPort(index.toString), makeRandomPort("0" + index)))
+    )
   }
 
   def makeRandomPort(suffix: String): KubernetesPort = {
