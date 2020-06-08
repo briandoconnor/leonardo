@@ -28,6 +28,20 @@ object LeonardoApiClient {
     client <- blaze.BlazeClientBuilder[IO](blockingEc).resource
   } yield Logger[IO](logHeaders = false, logBody = true)(client)
 
+  def createDisk(
+    googleProject: GoogleProject,
+    diskName: DiskName
+  )(implicit client: Client[IO], authHeader: Authorization): IO[GetPersistentDiskResponse] =
+    client.expectOr[GetPersistentDiskResponse](
+      Request[IO](
+        method = Method.GET,
+        headers = Headers.of(authHeader),
+        uri = Uri
+          .unsafeFromString(LeonardoConfig.Leonardo.apiUrl)
+          .withPath(s"/api/google/v1/disks/${googleProject.value}/${diskName.value}")
+      )
+    )(onError)
+
   def getDisk(
     googleProject: GoogleProject,
     diskName: DiskName
