@@ -6,14 +6,30 @@ import java.time.Instant
 import cats.implicits._
 import io.circe.syntax._
 import io.circe.{Decoder, DecodingFailure, Encoder}
-import org.broadinstitute.dsde.workbench.leonardo.SamResource.{PersistentDiskSamResource, ProjectSamResource, RuntimeSamResource}
+import org.broadinstitute.dsde.workbench.leonardo.SamResource.{
+  PersistentDiskSamResource,
+  ProjectSamResource,
+  RuntimeSamResource
+}
 import org.broadinstitute.dsde.workbench.google2.{DiskName, ZoneName}
 import org.broadinstitute.dsde.workbench.google2.GKEModels.{KubernetesClusterName, NodepoolName}
 import org.broadinstitute.dsde.workbench.google2.KubernetesModels.KubernetesApiServerIp
 import org.broadinstitute.dsde.workbench.google2.KubernetesSerializableName.{NamespaceName, ServiceName}
-import org.broadinstitute.dsde.workbench.google2.{KubernetesName, Location, MachineTypeName, NetworkName, SubnetworkName}
+import org.broadinstitute.dsde.workbench.google2.{
+  KubernetesName,
+  Location,
+  MachineTypeName,
+  NetworkName,
+  SubnetworkName
+}
 import org.broadinstitute.dsde.workbench.model.WorkbenchEmail
-import org.broadinstitute.dsde.workbench.model.google.{GcsBucketName, GcsObjectName, GcsPath, GoogleProject, parseGcsPath}
+import org.broadinstitute.dsde.workbench.model.google.{
+  parseGcsPath,
+  GcsBucketName,
+  GcsObjectName,
+  GcsPath,
+  GoogleProject
+}
 
 case class DecodingError(message: String)
 
@@ -125,26 +141,33 @@ object JsonCodec {
   implicit val diskTypeEncoder: Encoder[DiskType] = Encoder.encodeString.contramap(_.googleString)
 
   implicit val errorSourceEncoder: Encoder[ErrorSource] = Encoder.encodeString.contramap(_.toString)
-  implicit val kubernetesErrorEncoder: Encoder[KubernetesError] = Encoder.forProduct4("errorMessage", "errorCode", "timestamp", "errorSource")(x => KubernetesError.unapply(x).get)
+  implicit val kubernetesErrorEncoder: Encoder[KubernetesError] =
+    Encoder.forProduct4("errorMessage", "errorCode", "timestamp", "errorSource")(x => KubernetesError.unapply(x).get)
   implicit val nodepoolIdEncoder: Encoder[NodepoolLeoId] = Encoder.encodeLong.contramap(_.id)
   implicit val nodepoolNameEncoder: Encoder[NodepoolName] = Encoder.encodeString.contramap(_.value)
-  implicit val nodepoolStatusEncoder: Encoder[NodepoolStatus] = Encoder.encodeString.contramap(status => status match {
-    case NodepoolStatus.Precreating => NodepoolStatus.Provisioning.toString
-    case _ => status.toString
-  })
+  implicit val nodepoolStatusEncoder: Encoder[NodepoolStatus] = Encoder.encodeString.contramap(status =>
+    status match {
+      case NodepoolStatus.Precreating => NodepoolStatus.Provisioning.toString
+      case _                          => status.toString
+    }
+  )
   implicit val numNodesEncoder: Encoder[NumNodes] = Encoder.encodeInt.contramap(_.amount)
   implicit val autoscalingMinEncoder: Encoder[AutoscalingMin] = Encoder.encodeInt.contramap(_.amount)
   implicit val autoscalingMaxEncoder: Encoder[AutoscalingMax] = Encoder.encodeInt.contramap(_.amount)
-  implicit val autoscalingConfigEncoder: Encoder[AutoscalingConfig] = Encoder.forProduct2("autoscalingMin", "autoscalingMax")(x => AutoscalingConfig.unapply(x).get)
-  implicit val kubernetesRuntimeConfigEecoder: Encoder[KubernetesRuntimeConfig] = Encoder.forProduct3("numNodes", "machineType", "autoscalingEnabled")(x => KubernetesRuntimeConfig.unapply(x).get)
+  implicit val autoscalingConfigEncoder: Encoder[AutoscalingConfig] =
+    Encoder.forProduct2("autoscalingMin", "autoscalingMax")(x => AutoscalingConfig.unapply(x).get)
+  implicit val kubernetesRuntimeConfigEecoder: Encoder[KubernetesRuntimeConfig] =
+    Encoder.forProduct3("numNodes", "machineType", "autoscalingEnabled")(x => KubernetesRuntimeConfig.unapply(x).get)
 
   implicit val locationEncoder: Encoder[Location] = Encoder.encodeString.contramap(_.value)
   implicit val kubeClusterIdEncoder: Encoder[KubernetesClusterLeoId] = Encoder.encodeLong.contramap(_.id)
   implicit val kubeClusterNameEncoder: Encoder[KubernetesClusterName] = Encoder.encodeString.contramap(_.value)
-  implicit val kubeClusterStatusEncoder: Encoder[KubernetesClusterStatus] = Encoder.encodeString.contramap(status => status match {
-    case KubernetesClusterStatus.Precreating => KubernetesClusterStatus.Provisioning.toString
-    case _ => status.toString
-  })
+  implicit val kubeClusterStatusEncoder: Encoder[KubernetesClusterStatus] = Encoder.encodeString.contramap(status =>
+    status match {
+      case KubernetesClusterStatus.Precreating => KubernetesClusterStatus.Provisioning.toString
+      case _                                   => status.toString
+    }
+  )
   implicit val kubeSamIdEncoder: Encoder[AppSamResourceId] = Encoder.encodeString.contramap(_.resourceId)
   implicit val namespaceEncoder: Encoder[NamespaceName] = Encoder.encodeString.contramap(_.value)
   implicit val appNameEncoder: Encoder[AppName] = Encoder.encodeString.contramap(_.value)
@@ -153,11 +176,13 @@ object JsonCodec {
   implicit val serviceNameEncoder: Encoder[ServiceName] = Encoder.encodeString.contramap(_.value)
 
   implicit val apiServerIpEncoder: Encoder[KubernetesApiServerIp] = Encoder.encodeString.contramap(_.value)
-  implicit val networkNameEncoder: Encoder[NetworkName] =Encoder.encodeString.contramap(_.value)
+  implicit val networkNameEncoder: Encoder[NetworkName] = Encoder.encodeString.contramap(_.value)
   implicit val subNetworkNameEncoder: Encoder[SubnetworkName] = Encoder.encodeString.contramap(_.value)
   implicit val ipRangeEncoder: Encoder[IpRange] = Encoder.encodeString.contramap(_.value)
-  implicit val networkFieldsEncoder: Encoder[NetworkFields] = Encoder.forProduct3("networkName", "subNetworkName", "subNetworkIpRange")(x => NetworkFields.unapply(x).get)
-  implicit val kubeAsyncFieldEncoder: Encoder[KubernetesClusterAsyncFields] = Encoder.forProduct2("apiServerIp", "networkInfo")(x => KubernetesClusterAsyncFields.unapply(x).get)
+  implicit val networkFieldsEncoder: Encoder[NetworkFields] =
+    Encoder.forProduct3("networkName", "subNetworkName", "subNetworkIpRange")(x => NetworkFields.unapply(x).get)
+  implicit val kubeAsyncFieldEncoder: Encoder[KubernetesClusterAsyncFields] =
+    Encoder.forProduct2("apiServerIp", "networkInfo")(x => KubernetesClusterAsyncFields.unapply(x).get)
 
   // Decoders
   implicit val operationNameDecoder: Decoder[OperationName] = Decoder.decodeString.map(OperationName)
@@ -269,34 +294,48 @@ object JsonCodec {
   implicit val projectSamResourceDecoder: Decoder[ProjectSamResource] =
     Decoder.decodeString.map(x => ProjectSamResource(GoogleProject(x)))
 
-
-  implicit val errorSourceDecoder: Decoder[ErrorSource] = Decoder.decodeString.emap(s => ErrorSource.stringToObject.get(s).toRight(s"Invalid error source ${s}"))
-  implicit val kubernetesErrorDecoder: Decoder[KubernetesError] = Decoder.forProduct4("errorMessage", "errorCode", "timestamp", "errorSource")(KubernetesError.apply)
+  implicit val errorSourceDecoder: Decoder[ErrorSource] =
+    Decoder.decodeString.emap(s => ErrorSource.stringToObject.get(s).toRight(s"Invalid error source ${s}"))
+  implicit val kubernetesErrorDecoder: Decoder[KubernetesError] =
+    Decoder.forProduct4("errorMessage", "errorCode", "timestamp", "errorSource")(KubernetesError.apply)
   implicit val nodepoolIdDecoder: Decoder[NodepoolLeoId] = Decoder.decodeLong.map(NodepoolLeoId)
-  implicit val nodepoolNameDecoder: Decoder[NodepoolName] = Decoder.decodeString.emap(s => KubernetesName.withValidation(s, NodepoolName).leftMap(_.getMessage))
-  implicit val nodepoolStatusDecoder: Decoder[NodepoolStatus] = Decoder.decodeString.emap(s => NodepoolStatus.stringToObject.get(s).toRight(s"Invalid nodepool status ${s}"))
-  implicit val numNodesDecoder: Decoder[NumNodes] = Decoder.decodeInt.emap(n => if (n < 1) Left("Minimum number of nodes is 1") else Right(NumNodes.apply(n)))
+  implicit val nodepoolNameDecoder: Decoder[NodepoolName] =
+    Decoder.decodeString.emap(s => KubernetesName.withValidation(s, NodepoolName).leftMap(_.getMessage))
+  implicit val nodepoolStatusDecoder: Decoder[NodepoolStatus] =
+    Decoder.decodeString.emap(s => NodepoolStatus.stringToObject.get(s).toRight(s"Invalid nodepool status ${s}"))
+  implicit val numNodesDecoder: Decoder[NumNodes] =
+    Decoder.decodeInt.emap(n => if (n < 1) Left("Minimum number of nodes is 1") else Right(NumNodes.apply(n)))
   implicit val autoscalingMinDecoder: Decoder[AutoscalingMin] = Decoder.decodeInt.map(AutoscalingMin)
   implicit val autoscalingMaxDecoder: Decoder[AutoscalingMax] = Decoder.decodeInt.map(AutoscalingMax)
-  implicit val autoscalingConfigDecoder: Decoder[AutoscalingConfig] = Decoder.forProduct2("autoscalingMin", "autoscalingMax")(AutoscalingConfig.apply)
-  implicit val kubernetesRuntimeConfigDecoder: Decoder[KubernetesRuntimeConfig] = Decoder.forProduct3("numNodes", "machineType", "autoscalingEnabled")(KubernetesRuntimeConfig.apply)
+  implicit val autoscalingConfigDecoder: Decoder[AutoscalingConfig] =
+    Decoder.forProduct2("autoscalingMin", "autoscalingMax")(AutoscalingConfig.apply)
+  implicit val kubernetesRuntimeConfigDecoder: Decoder[KubernetesRuntimeConfig] =
+    Decoder.forProduct3("numNodes", "machineType", "autoscalingEnabled")(KubernetesRuntimeConfig.apply)
 
   implicit val locationDecoder: Decoder[Location] = Decoder.decodeString.map(Location)
   implicit val kubeClusterIdDecoder: Decoder[KubernetesClusterLeoId] = Decoder.decodeLong.map(KubernetesClusterLeoId)
-  implicit val kubeClusterNameDecoder: Decoder[KubernetesClusterName] = Decoder.decodeString.emap(s => KubernetesName.withValidation(s, KubernetesClusterName).leftMap(_.getMessage))
-  implicit val kubeClusterStatusDecoder: Decoder[KubernetesClusterStatus] = Decoder.decodeString.emap(s => KubernetesClusterStatus.stringToObject.get(s).toRight(s"Invalid cluster status ${s}"))
+  implicit val kubeClusterNameDecoder: Decoder[KubernetesClusterName] =
+    Decoder.decodeString.emap(s => KubernetesName.withValidation(s, KubernetesClusterName).leftMap(_.getMessage))
+  implicit val kubeClusterStatusDecoder: Decoder[KubernetesClusterStatus] = Decoder.decodeString.emap(s =>
+    KubernetesClusterStatus.stringToObject.get(s).toRight(s"Invalid cluster status ${s}")
+  )
   implicit val appSamIdDecoder: Decoder[AppSamResourceId] = Decoder.decodeString.map(AppSamResourceId)
-  implicit val namespaceNameDecoder: Decoder[NamespaceName] = Decoder.decodeString.emap(s => KubernetesName.withValidation(s, NamespaceName).leftMap(_.getMessage))
+  implicit val namespaceNameDecoder: Decoder[NamespaceName] =
+    Decoder.decodeString.emap(s => KubernetesName.withValidation(s, NamespaceName).leftMap(_.getMessage))
   implicit val namespaceIdDecoder: Decoder[NamespaceId] = Decoder.decodeLong.map(NamespaceId)
   implicit val namespaceDecoder: Decoder[Namespace] = Decoder.forProduct2("id", "name")(Namespace.apply)
   implicit val appNameDecoder: Decoder[AppName] = Decoder.decodeString.map(AppName)
-  implicit val appStatusDecoder: Decoder[AppStatus] = Decoder.decodeString.emap(s => AppStatus.stringToObject.get(s).toRight(s"Invalid app status ${s}"))
-  implicit val appTypeDecoder: Decoder[AppType] = Decoder.decodeString.emap(s => AppType.stringToObject.get(s).toRight(s"Invalid app type ${s}"))
+  implicit val appStatusDecoder: Decoder[AppStatus] =
+    Decoder.decodeString.emap(s => AppStatus.stringToObject.get(s).toRight(s"Invalid app status ${s}"))
+  implicit val appTypeDecoder: Decoder[AppType] =
+    Decoder.decodeString.emap(s => AppType.stringToObject.get(s).toRight(s"Invalid app type ${s}"))
 
   implicit val apiServerIpDecoder: Decoder[KubernetesApiServerIp] = Decoder.decodeString.map(KubernetesApiServerIp)
   implicit val networkNameDecoder: Decoder[NetworkName] = Decoder.decodeString.map(NetworkName)
   implicit val subNetworkNameDecoder: Decoder[SubnetworkName] = Decoder.decodeString.map(SubnetworkName)
   implicit val ipRangeDecoder: Decoder[IpRange] = Decoder.decodeString.map(IpRange)
-  implicit val networkFieldsDecoder: Decoder[NetworkFields] = Decoder.forProduct3("networkName", "subNetworkName", "subNetworkIpRange")(NetworkFields)
-  implicit val kubeAsyncFieldDecoder: Decoder[KubernetesClusterAsyncFields] = Decoder.forProduct2("apiServerIp", "networkInfo")(KubernetesClusterAsyncFields)
+  implicit val networkFieldsDecoder: Decoder[NetworkFields] =
+    Decoder.forProduct3("networkName", "subNetworkName", "subNetworkIpRange")(NetworkFields)
+  implicit val kubeAsyncFieldDecoder: Decoder[KubernetesClusterAsyncFields] =
+    Decoder.forProduct2("apiServerIp", "networkInfo")(KubernetesClusterAsyncFields)
 }

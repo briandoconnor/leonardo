@@ -9,10 +9,26 @@ import org.broadinstitute.dsde.workbench.google2.GKEModels.{KubernetesClusterId,
 import org.broadinstitute.dsde.workbench.google2.KubernetesModels.{KubernetesApiServerIp, ServicePort}
 import org.broadinstitute.dsde.workbench.google2.KubernetesSerializableName.{NamespaceName, ServiceName}
 import org.broadinstitute.dsde.workbench.model.{WorkbenchEmail}
-import org.broadinstitute.dsde.workbench.google2.{KubernetesName, Location, MachineTypeName, NetworkName, SubnetworkName}
+import org.broadinstitute.dsde.workbench.google2.{
+  KubernetesName,
+  Location,
+  MachineTypeName,
+  NetworkName,
+  SubnetworkName
+}
 import org.broadinstitute.dsde.workbench.model.google.GoogleProject
 
-case class KubernetesCluster(id: KubernetesClusterLeoId, googleProject: GoogleProject, clusterName: KubernetesClusterName, location: Location, status: KubernetesClusterStatus, serviceAccount: WorkbenchEmail, auditInfo: AuditInfo, asyncFields: Option[KubernetesClusterAsyncFields], namespaces: List[Namespace], nodepools: List[Nodepool], errors: List[KubernetesError]) {
+case class KubernetesCluster(id: KubernetesClusterLeoId,
+                             googleProject: GoogleProject,
+                             clusterName: KubernetesClusterName,
+                             location: Location,
+                             status: KubernetesClusterStatus,
+                             serviceAccount: WorkbenchEmail,
+                             auditInfo: AuditInfo,
+                             asyncFields: Option[KubernetesClusterAsyncFields],
+                             namespaces: List[Namespace],
+                             nodepools: List[Nodepool],
+                             errors: List[KubernetesError]) {
 
   def getGkeClusterId: KubernetesClusterId = KubernetesClusterId(googleProject, location, clusterName)
 }
@@ -139,7 +155,8 @@ final case class Nodepool(id: NodepoolLeoId,
                           apps: List[App])
 object KubernetesNameUtils {
   //UUID almost works for this use case, but kubernetes names must start with a-z
-  def getUniqueName[A](apply: String => A): Either[Throwable, A] = KubernetesName.withValidation('k' + UUID.randomUUID().toString.toLowerCase.substring(1), apply)
+  def getUniqueName[A](apply: String => A): Either[Throwable, A] =
+    KubernetesName.withValidation('k' + UUID.randomUUID().toString.toLowerCase.substring(1), apply)
 }
 
 final case class AutoscalingConfig(autoscalingMin: AutoscalingMin, autoscalingMax: AutoscalingMax)
@@ -151,16 +168,15 @@ final case class AutoscalingMax(amount: Int) extends AnyVal
 
 final case class DefaultKubernetesLabels(googleProject: GoogleProject,
                                          appName: AppName,
-                               creator: WorkbenchEmail,
-                               serviceAccount: WorkbenchEmail) {
-  def toMap(): LabelMap = {
+                                         creator: WorkbenchEmail,
+                                         serviceAccount: WorkbenchEmail) {
+  def toMap(): LabelMap =
     Map(
       "appName" -> appName.toString,
       "googleProject" -> googleProject.toString,
       "creator" -> creator.toString,
       "clusterServiceAccount" -> serviceAccount.toString
     )
-  }
 }
 
 //TODO add errorType
@@ -211,12 +227,14 @@ final case class App(id: AppId,
                      labels: LabelMap,
                      //this is populated async to app creation
                      appResources: AppResources,
-                     errors: List[KubernetesError]
-              ) {
+                     errors: List[KubernetesError]) {
   //TODO this is not the proxy route we want to return from the API call. This is the URL Leo will use internally.
   def getInternalProxyUrls(apiServerIp: KubernetesApiServerIp): Map[ServiceName, URL] =
     appResources.services.map { service =>
-      (service.config.name, new URL(s"${apiServerIp.url}/api/v1/namespaces/${appResources.namespace.name.value}/services/${service.config.name}/proxy/"))
+      (service.config.name,
+       new URL(
+         s"${apiServerIp.url}/api/v1/namespaces/${appResources.namespace.name.value}/services/${service.config.name}/proxy/"
+       ))
     }.toMap
 }
 
@@ -266,6 +284,4 @@ final case class PortId(id: Long) extends AnyVal
 
 final case class KubernetesServiceKindName(value: String) extends AnyVal
 
-final case class KubernetesRuntimeConfig(numNodes: NumNodes,
-                                         machineType: MachineTypeName,
-                                         autoscalingEnabled: Boolean)
+final case class KubernetesRuntimeConfig(numNodes: NumNodes, machineType: MachineTypeName, autoscalingEnabled: Boolean)
