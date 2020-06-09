@@ -29,9 +29,11 @@ object KubernetesServiceDbQueries {
       labelFilter
     )
 
-  //this is intended to be called first by any kubernetes /app endpoints to enforce one cluster per project
-  //an error is thrown if the cluster is creating, due to the fact that we do not allow apps to be created while the cluster for that project is creating, since that means another app is already queued and waiting on this cluster
-  //if the cluster already exists, this is a no-op
+  // this is intended to be called first by any kubernetes /app endpoints to enforce one cluster per project
+  // an error is thrown if the cluster is creating, due to the fact that we do not allow apps to be created while the cluster for that project is creating, since that means another app is already queued and waiting on this cluster
+  // if the cluster already exists, this is a no-op
+  // if the cluster does not exist, this also saves a dummy nodepool with the cluster.
+  // For more info on dummy nodepool, See: https://broadworkbench.atlassian.net/wiki/spaces/IA/pages/492175377/2020-05-29+Dummy+Nodepool+for+Galaxy
   def saveOrGetForApp(
     saveKubernetesCluster: SaveKubernetesCluster
   )(implicit ec: ExecutionContext): DBIO[SaveClusterResult] =

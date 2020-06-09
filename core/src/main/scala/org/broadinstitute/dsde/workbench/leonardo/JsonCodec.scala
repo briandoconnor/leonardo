@@ -31,8 +31,6 @@ import org.broadinstitute.dsde.workbench.model.google.{
   GoogleProject
 }
 
-case class DecodingError(message: String)
-
 object JsonCodec {
   // Errors
   val negativeNumberDecodingFailure = DecodingFailure("Negative number is not allowed", List.empty)
@@ -156,7 +154,7 @@ object JsonCodec {
   implicit val autoscalingMaxEncoder: Encoder[AutoscalingMax] = Encoder.encodeInt.contramap(_.amount)
   implicit val autoscalingConfigEncoder: Encoder[AutoscalingConfig] =
     Encoder.forProduct2("autoscalingMin", "autoscalingMax")(x => AutoscalingConfig.unapply(x).get)
-  implicit val kubernetesRuntimeConfigEecoder: Encoder[KubernetesRuntimeConfig] =
+  implicit val kubernetesRuntimeConfigEncoder: Encoder[KubernetesRuntimeConfig] =
     Encoder.forProduct3("numNodes", "machineType", "autoscalingEnabled")(x => KubernetesRuntimeConfig.unapply(x).get)
 
   implicit val locationEncoder: Encoder[Location] = Encoder.encodeString.contramap(_.value)

@@ -21,6 +21,10 @@ import org.broadinstitute.dsde.workbench.model.google.GoogleProject
 case class KubernetesCluster(id: KubernetesClusterLeoId,
                              googleProject: GoogleProject,
                              clusterName: KubernetesClusterName,
+                             // the GKE API supports a location (e.g. us-central1 (a 'region') or us-central1-a (a 'zone))
+                             // If a zone is specified, it will be a single-zone cluster, otherwise it will span multiple zones in the region
+                             // Leo currently specifies a zone, e.g. "us-central1-a" and makes all clusters single-zone
+                             // Location is exposed here in case we ever want to leverage the flexibility GKE provides
                              location: Location,
                              status: KubernetesClusterStatus,
                              serviceAccount: WorkbenchEmail,
@@ -28,6 +32,7 @@ case class KubernetesCluster(id: KubernetesClusterLeoId,
                              asyncFields: Option[KubernetesClusterAsyncFields],
                              namespaces: List[Namespace],
                              nodepools: List[Nodepool],
+                              //TODO: populate this
                              errors: List[KubernetesError]) {
 
   def getGkeClusterId: KubernetesClusterId = KubernetesClusterId(googleProject, location, clusterName)
@@ -170,7 +175,7 @@ final case class DefaultKubernetesLabels(googleProject: GoogleProject,
                                          appName: AppName,
                                          creator: WorkbenchEmail,
                                          serviceAccount: WorkbenchEmail) {
-  def toMap(): LabelMap =
+  val toMap: LabelMap =
     Map(
       "appName" -> appName.toString,
       "googleProject" -> googleProject.toString,
@@ -179,7 +184,6 @@ final case class DefaultKubernetesLabels(googleProject: GoogleProject,
     )
 }
 
-//TODO add errorType
 final case class KubernetesError(errorMessage: String, errorCode: Int, timestamp: Instant, errorSource: ErrorSource)
 sealed abstract class ErrorSource
 object ErrorSource {
@@ -231,10 +235,10 @@ final case class App(id: AppId,
   //TODO this is not the proxy route we want to return from the API call. This is the URL Leo will use internally.
   def getInternalProxyUrls(apiServerIp: KubernetesApiServerIp): Map[ServiceName, URL] =
     appResources.services.map { service =>
-      (service.config.name,
+      service.config.name ->
        new URL(
          s"${apiServerIp.url}/api/v1/namespaces/${appResources.namespace.name.value}/services/${service.config.name}/proxy/"
-       ))
+       )
     }.toMap
 }
 

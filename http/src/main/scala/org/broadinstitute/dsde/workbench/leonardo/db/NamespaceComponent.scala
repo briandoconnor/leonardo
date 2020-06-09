@@ -8,7 +8,7 @@ import slick.lifted.Tag
 
 import scala.concurrent.ExecutionContext
 
-case class NamespaceRecord(id: NamespaceId, clusterId: KubernetesClusterLeoId, namespaceName: NamespaceName)
+final case class NamespaceRecord(id: NamespaceId, clusterId: KubernetesClusterLeoId, namespaceName: NamespaceName)
 
 class NamespaceTable(tag: Tag) extends Table[NamespaceRecord](tag, "NAMESPACE") {
   def id = column[NamespaceId]("id", O.PrimaryKey, O.AutoInc)
