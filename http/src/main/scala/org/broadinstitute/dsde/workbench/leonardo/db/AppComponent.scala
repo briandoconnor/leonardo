@@ -148,8 +148,8 @@ object appQuery extends TableQuery(new AppTable(_)) {
 
   def markAsDeleted(id: AppId, now: Instant): DBIO[Int] =
     getByIdQuery(id)
-      .map(a => (a.status, a.destroyedDate))
-      .update((AppStatus.Deleted, now))
+      .map(a => (a.status, a.destroyedDate, a.diskId))
+      .update((AppStatus.Deleted, now, None))
 
   private[db] def getByIdQuery(id: AppId) =
     appQuery.filter(_.id === id)
