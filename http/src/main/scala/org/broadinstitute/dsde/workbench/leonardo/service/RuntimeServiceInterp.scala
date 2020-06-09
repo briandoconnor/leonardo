@@ -602,6 +602,11 @@ class RuntimeServiceInterp[F[_]: Parallel](config: RuntimeServiceConfig,
             attached <- RuntimeServiceDbQueries.isDiskAttachedToRuntime(pd.id).transaction
             _ <- if (attached) F.raiseError[Unit](DiskAlreadyAttachedException(googleProject, req.name, ctx.traceId))
             else F.unit
+            hasPermission <- authProvider.hasPersistentDiskPermission(pd.samResource,
+                                                                      userInfo,
+                                                                      PersistentDiskAction.AttachPersistentDisk,
+                                                                      googleProject)
+            _ <- if (hasPermission) F.unit else F.raiseError[Unit](AuthorizationError(Some(userInfo.userEmail)))
           } yield pd
         case None =>
           for {
@@ -628,7 +633,6 @@ class RuntimeServiceInterp[F[_]: Parallel](config: RuntimeServiceConfig,
             pd <- persistentDiskQuery.save(diskBeforeSave).transaction
           } yield pd
       }
-      _ <- log.info(s"diskFrom db: ${diskOpt}....final disk: ${disk}")
     } yield disk
 }
 

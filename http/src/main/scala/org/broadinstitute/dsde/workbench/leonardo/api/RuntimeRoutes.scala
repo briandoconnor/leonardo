@@ -14,7 +14,7 @@ import akka.http.scaladsl.server.{Directive, Directive1}
 import cats.effect.{IO, Timer}
 import cats.mtl.ApplicativeAsk
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, DecodingFailure, Encoder}
 import org.broadinstitute.dsde.workbench.google2.{DiskName, MachineTypeName}
 import org.broadinstitute.dsde.workbench.leonardo.JsonCodec._
 import org.broadinstitute.dsde.workbench.leonardo.SamResource.RuntimeSamResource
@@ -301,7 +301,17 @@ object RuntimeRoutes {
         case CloudService.Dataproc =>
           x.as[RuntimeConfigRequest.DataprocConfig]
         case CloudService.GCE =>
-          x.as[RuntimeConfigRequest.GceWithPdConfig] orElse x.as[RuntimeConfigRequest.GceConfig]
+          for {
+            machineType <- x.downField("machineType").as[Option[MachineTypeName]]
+            pd <- x.downField("persistentDisk").as[Option[PersistentDiskRequest]]
+            res <- pd match {
+              case Some(p) => RuntimeConfigRequest.GceWithPdConfig(machineType, p).asRight[DecodingFailure]
+              case None =>
+                x.downField("diskSize")
+                  .as[Option[DiskSize]]
+                  .map(d => RuntimeConfigRequest.GceConfig(machineType, d))
+            }
+          } yield res
       }
     } yield r
   }

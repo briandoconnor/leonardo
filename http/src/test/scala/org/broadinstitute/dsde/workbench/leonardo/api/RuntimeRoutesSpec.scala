@@ -40,4 +40,22 @@ class RuntimeRoutesSpec extends FlatSpec with Matchers with LeonardoTestSuite {
     )
     decode[RuntimeConfigRequest](jsonString) shouldBe Right(expectedResult)
   }
+
+  it should "decode RuntimeConfigRequest correctly" in {
+    val jsonString =
+      """
+        |{
+        |  "cloudService": "gce",
+        |  "persistentDisk": {
+        |    "name": "qi-disk-c1",
+        |    "size": 30
+        |  }
+        |}
+        |""".stripMargin
+    val expectedResult = RuntimeConfigRequest.GceWithPdConfig(
+      None,
+      PersistentDiskRequest(DiskName("qi-disk-c1"), Some(DiskSize(30)), None, None, Map.empty)
+    )
+    decode[RuntimeConfigRequest](jsonString) shouldBe Right(expectedResult)
+  }
 }
