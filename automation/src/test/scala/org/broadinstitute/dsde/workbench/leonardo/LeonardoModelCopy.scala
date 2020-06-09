@@ -5,6 +5,7 @@ import java.time.Instant
 
 import org.broadinstitute.dsde.workbench.google2.{DiskName, MachineTypeName, ZoneName}
 import org.broadinstitute.dsde.workbench.leonardo.ClusterStatus.ClusterStatus
+import org.broadinstitute.dsde.workbench.leonardo.http.DiskConfig
 import org.broadinstitute.dsde.workbench.model.WorkbenchEmail
 import org.broadinstitute.dsde.workbench.model.google._
 
@@ -179,7 +180,8 @@ final case class GetRuntimeResponseCopy(runtimeName: RuntimeName,
                                         jupyterStartUserScriptUri: Option[UserScriptPath],
                                         errors: List[RuntimeError],
                                         userJupyterExtensionConfig: Option[UserJupyterExtensionConfig],
-                                        autopauseThreshold: Int)
+                                        autopauseThreshold: Int,
+                                        diskConfig: Option[DiskConfig])
 
 final case class ListRuntimeResponseCopy(id: Long,
                                          runtimeName: RuntimeName,

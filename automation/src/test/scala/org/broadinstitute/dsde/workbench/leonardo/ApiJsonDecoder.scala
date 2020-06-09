@@ -3,6 +3,7 @@ package org.broadinstitute.dsde.workbench.leonardo
 import io.circe.Decoder
 import org.broadinstitute.dsde.workbench.leonardo.ClusterStatus.ClusterStatus
 import org.broadinstitute.dsde.workbench.leonardo.JsonCodec._
+import org.broadinstitute.dsde.workbench.leonardo.http.DiskConfig
 
 object ApiJsonDecoder {
   implicit val clusterStatusDecoder: Decoder[ClusterStatus] =
@@ -23,7 +24,14 @@ object ApiJsonDecoder {
     "labels"
   )(GetPersistentDiskResponse.apply)
 
-  implicit val getRuntimeResponseCopyDecoder: Decoder[GetRuntimeResponseCopy] = Decoder.forProduct14(
+  implicit val diskConfigDecoder: Decoder[DiskConfig] = Decoder.forProduct4(
+    "name",
+    "size",
+    "diskType",
+    "blockSize"
+  )(DiskConfig.apply)
+
+  implicit val getRuntimeResponseCopyDecoder: Decoder[GetRuntimeResponseCopy] = Decoder.forProduct15(
     "runtimeName",
     "googleProject",
     "serviceAccount",
@@ -37,6 +45,7 @@ object ApiJsonDecoder {
     "jupyterStartUserScriptUri",
     "errors",
     "userJupyterExtensionConfig",
-    "autopauseThreshold"
+    "autopauseThreshold",
+    "diskConfig"
   )(GetRuntimeResponseCopy.apply)
 }

@@ -23,7 +23,6 @@ import org.broadinstitute.dsde.workbench.leonardo.http.api.LeoRoutesJsonCodec.da
 import org.broadinstitute.dsde.workbench.leonardo.http.api.RuntimeRoutes._
 import org.broadinstitute.dsde.workbench.leonardo.http.service.{
   GetRuntimeResponse,
-  PersistentDiskRequest,
   RuntimeConfigRequest,
   RuntimeService
 }

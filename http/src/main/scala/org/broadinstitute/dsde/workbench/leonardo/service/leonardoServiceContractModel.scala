@@ -5,18 +5,11 @@ package service
 import java.net.URL
 import java.time.Instant
 
-import org.broadinstitute.dsde.workbench.google2.{DiskName, MachineTypeName}
+import org.broadinstitute.dsde.workbench.google2.MachineTypeName
 import org.broadinstitute.dsde.workbench.leonardo.SamResource.RuntimeSamResource
-import org.broadinstitute.dsde.workbench.leonardo.http.api.DiskConfig
 import org.broadinstitute.dsde.workbench.model.WorkbenchEmail
 import org.broadinstitute.dsde.workbench.model.google.GoogleModelJsonSupport.{GcsPathFormat => _}
 import org.broadinstitute.dsde.workbench.model.google.{GcsPath, GoogleProject}
-
-final case class PersistentDiskRequest(name: DiskName,
-                                       size: Option[DiskSize],
-                                       diskType: Option[DiskType],
-                                       blockSize: Option[BlockSize],
-                                       labels: LabelMap)
 
 /** Runtime configuration in the createRuntime request */
 sealed trait RuntimeConfigRequest extends Product with Serializable {

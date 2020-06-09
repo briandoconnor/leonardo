@@ -21,7 +21,6 @@ import org.broadinstitute.dsde.workbench.leonardo.config._
 import org.broadinstitute.dsde.workbench.leonardo.dao.DockerDAO
 import org.broadinstitute.dsde.workbench.leonardo.db._
 import org.broadinstitute.dsde.workbench.leonardo.http.api.{
-  CreateDiskRequest,
   CreateRuntime2Request,
   ListRuntimeResponse2,
   UpdateRuntimeConfigRequest,
@@ -609,7 +608,7 @@ class RuntimeServiceInterp[F[_]: Parallel](config: RuntimeServiceConfig,
             hasPermission <- authProvider.hasProjectPermission(userInfo, CreatePersistentDisk, googleProject)
             _ <- if (hasPermission) F.unit else F.raiseError[Unit](AuthorizationError(Some(userInfo.userEmail)))
             samResource <- F.delay(PersistentDiskSamResource(UUID.randomUUID().toString))
-            disk <- F.fromEither(
+            diskBeforeSave <- F.fromEither(
               DiskServiceInterp.convertToDisk(userInfo,
                                               serviceAccount,
                                               googleProject,
@@ -623,12 +622,13 @@ class RuntimeServiceInterp[F[_]: Parallel](config: RuntimeServiceConfig,
               .notifyResourceCreated(samResource, userInfo.userEmail, googleProject)
               .handleErrorWith { t =>
                 log.error(t)(
-                  s"[${ctx.traceId}] Failed to notify the AuthProvider for creation of persistent disk ${disk.projectNameString}"
+                  s"[${ctx.traceId}] Failed to notify the AuthProvider for creation of persistent disk ${diskBeforeSave.projectNameString}"
                 ) >> F.raiseError(t)
               }
-            pd <- persistentDiskQuery.save(disk).transaction
+            pd <- persistentDiskQuery.save(diskBeforeSave).transaction
           } yield pd
       }
+      _ <- log.info(s"diskFrom db: ${diskOpt}....final disk: ${disk}")
     } yield disk
 }
 

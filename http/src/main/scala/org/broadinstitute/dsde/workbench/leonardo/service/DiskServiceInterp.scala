@@ -16,7 +16,6 @@ import org.broadinstitute.dsde.workbench.leonardo.SamResource.PersistentDiskSamR
 import org.broadinstitute.dsde.workbench.leonardo.config.PersistentDiskConfig
 import org.broadinstitute.dsde.workbench.leonardo.db._
 import org.broadinstitute.dsde.workbench.leonardo.http.api.{
-  CreateDiskRequest,
   GetPersistentDiskResponse,
   ListPersistentDiskResponse,
   UpdateDiskRequest

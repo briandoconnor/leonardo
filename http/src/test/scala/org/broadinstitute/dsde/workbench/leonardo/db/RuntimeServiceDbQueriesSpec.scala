@@ -15,7 +15,7 @@ import org.broadinstitute.dsde.workbench.leonardo.db.{
   RuntimeServiceDbQueries,
   TestComponent
 }
-import org.broadinstitute.dsde.workbench.leonardo.http.api.{DiskConfig, ListRuntimeResponse2}
+import org.broadinstitute.dsde.workbench.leonardo.http.api.ListRuntimeResponse2
 import org.broadinstitute.dsde.workbench.leonardo.http.service.GetRuntimeResponse
 import org.scalatest.FlatSpecLike
 import org.broadinstitute.dsde.workbench.leonardo.db.RuntimeServiceDbQueries._

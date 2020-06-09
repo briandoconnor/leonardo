@@ -68,6 +68,7 @@ class RuntimeCreationPdSpec
   "create and attach an existing a persistent disk" in { googleProject =>
     val runtimeName = randomClusterName
     val diskName = DiskName("test-disk-1")
+    val diskSize = DiskSize(30)
 
     val res = dependencies.use { dep =>
       implicit val client = dep.httpClient
@@ -79,7 +80,7 @@ class RuntimeCreationPdSpec
             None,
             PersistentDiskRequest(
               diskName.value,
-              Some(50),
+              Some(30),
               None,
               None,
               Map.empty
@@ -89,20 +90,18 @@ class RuntimeCreationPdSpec
       )
 
       for {
-        _ <- LeonardoApiClient.deleteRuntimeWithWait(googleProject, runtimeName)
+        _ <- LeonardoApiClient.createDiskWithWait(googleProject, diskName)
         _ <- IO(withNewRuntime(googleProject, runtimeName, runtimeRequest, deleteRuntimeAfter = false) { runtime =>
           Leonardo.cluster
             .getRuntime(runtime.googleProject, runtime.clusterName)
             .status shouldBe ClusterStatus.Running
         })
-        disk <- LeonardoApiClient.getDisk(googleProject, diskName)
+        runtime <- LeonardoApiClient.getRuntime(googleProject, runtimeName)
         _ <- LeonardoApiClient.deleteDiskWithWait(googleProject, diskName)
-        diskAfterDelete <- LeonardoApiClient.getDisk(googleProject, diskName)
       } yield {
-        disk.status shouldBe DiskStatus.Ready
-        diskAfterDelete.status shouldBe DiskStatus.Deleted
+        runtime.diskConfig.map(_.name) shouldBe Some(diskName)
+        runtime.diskConfig.map(_.size) shouldBe Some(diskSize)
       }
-
     }
 
     res.unsafeRunSync()
