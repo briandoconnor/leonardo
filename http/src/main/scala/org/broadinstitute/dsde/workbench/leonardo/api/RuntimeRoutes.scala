@@ -23,11 +23,7 @@ import org.broadinstitute.dsde.workbench.leonardo.SamResource.RuntimeSamResource
 import org.broadinstitute.dsde.workbench.leonardo.api.CookieSupport
 import org.broadinstitute.dsde.workbench.leonardo.http.api.LeoRoutesJsonCodec.dataprocConfigDecoder
 import org.broadinstitute.dsde.workbench.leonardo.http.api.RuntimeRoutes._
-import org.broadinstitute.dsde.workbench.leonardo.http.service.{
-  GetRuntimeResponse,
-  RuntimeConfigRequest,
-  RuntimeService
-}
+import org.broadinstitute.dsde.workbench.leonardo.http.service.{GetRuntimeResponse, RuntimeService}
 import org.broadinstitute.dsde.workbench.leonardo.model.RequestValidationError
 import org.broadinstitute.dsde.workbench.model.google.GoogleProject
 import org.broadinstitute.dsde.workbench.model.{TraceId, UserInfo}
@@ -510,19 +506,6 @@ object RuntimeRoutes {
     }
 
 }
-
-final case class CreateRuntime2Request(labels: LabelMap,
-                                       jupyterUserScriptUri: Option[UserScriptPath],
-                                       jupyterStartUserScriptUri: Option[UserScriptPath],
-                                       runtimeConfig: Option[RuntimeConfigRequest],
-                                       userJupyterExtensionConfig: Option[UserJupyterExtensionConfig],
-                                       autopause: Option[Boolean],
-                                       autopauseThreshold: Option[FiniteDuration],
-                                       defaultClientId: Option[String],
-                                       toolDockerImage: Option[ContainerImage],
-                                       welderDockerImage: Option[ContainerImage],
-                                       scopes: Set[String],
-                                       customEnvironmentVariables: Map[String, String])
 
 sealed trait UpdateRuntimeConfigRequest extends Product with Serializable {
   def cloudService: CloudService

@@ -2,13 +2,15 @@ package org.broadinstitute.dsde.workbench.leonardo
 package runtimes
 
 import cats.effect.IO
-import org.broadinstitute.dsde.workbench.google2.{DiskName, GoogleDiskService, ZoneName}
-import org.http4s.{AuthScheme, Credentials}
+import org.broadinstitute.dsde.workbench.google2.Generators.genDiskName
+import org.broadinstitute.dsde.workbench.google2.{GoogleDiskService, ZoneName}
+import org.broadinstitute.dsde.workbench.leonardo.DiskModelGenerators._
+import org.broadinstitute.dsde.workbench.leonardo.LeonardoApiClient._
+import org.broadinstitute.dsde.workbench.leonardo.http.{PersistentDiskRequest, RuntimeConfigRequest}
 import org.http4s.client.Client
 import org.http4s.headers.Authorization
-import org.scalatest.{DoNotDiscover, ParallelTestExecution}
-import DiskModelGenerators._
-import org.broadinstitute.dsde.workbench.google2.Generators.genDiskName
+import org.http4s.{AuthScheme, Credentials}
+import org.scalatest.ParallelTestExecution
 
 //@DoNotDiscover
 class RuntimeCreationPdSpec
@@ -31,14 +33,13 @@ class RuntimeCreationPdSpec
     val diskName = genDiskName.sample.get
     val diskSize = genDiskSize.sample.get
     val runtimeName = randomClusterName
-    val runtimeRequest = defaultRuntimeRequest.copy(
+    val createRuntimeRequest = defaultCreateRuntime2Request.copy(
       runtimeConfig = Some(
         RuntimeConfigRequest.GceWithPdConfig(
-          "gce",
           None,
           PersistentDiskRequest(
-            diskName.value,
-            Some(diskSize.gb),
+            diskName,
+            Some(diskSize),
             None,
             None,
             Map.empty
@@ -47,27 +48,22 @@ class RuntimeCreationPdSpec
       )
     )
 
-    withNewRuntime(googleProject, runtimeName, runtimeRequest, deleteRuntimeAfter = false) { runtime =>
-      Leonardo.cluster
-        .getRuntime(runtime.googleProject, runtime.clusterName)
-        .status shouldBe ClusterStatus.Running
-
-      // validate disk still exists after runtime is deleted
-      val res = dependencies.use { dep =>
-        implicit val client = dep.httpClient
-        for {
-          _ <- LeonardoApiClient.deleteRuntimeWithWait(googleProject, runtimeName)
-          disk <- LeonardoApiClient.getDisk(googleProject, diskName)
-          _ <- LeonardoApiClient.deleteDiskWithWait(googleProject, diskName)
-          diskAfterDelete <- LeonardoApiClient.getDisk(googleProject, diskName)
-        } yield {
-          disk.status shouldBe DiskStatus.Ready
-          disk.size shouldBe diskSize
-          diskAfterDelete.status shouldBe DiskStatus.Deleted
-        }
+    // validate disk still exists after runtime is deleted
+    val res = dependencies.use { dep =>
+      implicit val client = dep.httpClient
+      for {
+        _ <- LeonardoApiClient.createRuntimeWithWait(googleProject, runtimeName, createRuntimeRequest)
+        _ <- LeonardoApiClient.deleteRuntimeWithWait(googleProject, runtimeName)
+        disk <- LeonardoApiClient.getDisk(googleProject, diskName)
+        _ <- LeonardoApiClient.deleteDiskWithWait(googleProject, diskName)
+        diskAfterDelete <- LeonardoApiClient.getDisk(googleProject, diskName)
+      } yield {
+        disk.status shouldBe DiskStatus.Ready
+        disk.size shouldBe diskSize
+        diskAfterDelete.status shouldBe DiskStatus.Deleted
       }
-      res.unsafeRunSync()
     }
+    res.unsafeRunSync()
   }
 
   "create and attach an existing a persistent disk" in { googleProject =>
@@ -78,14 +74,13 @@ class RuntimeCreationPdSpec
     val res = dependencies.use { dep =>
       implicit val client = dep.httpClient
 
-      val runtimeRequest = defaultRuntimeRequest.copy(
+      val createRuntimeRequest = defaultCreateRuntime2Request.copy(
         runtimeConfig = Some(
           RuntimeConfigRequest.GceWithPdConfig(
-            "gce",
             None,
             PersistentDiskRequest(
-              diskName.value,
-              Some(diskSize.gb),
+              diskName,
+              Some(DiskSize(500)), //this will be ignored since in this test we'll pre create a disk
               None,
               None,
               Map.empty
@@ -95,14 +90,15 @@ class RuntimeCreationPdSpec
       )
 
       for {
-        _ <- LeonardoApiClient.createDiskWithWait(googleProject, diskName)
-        _ <- IO(withNewRuntime(googleProject, runtimeName, runtimeRequest, deleteRuntimeAfter = false) { runtime =>
-          Leonardo.cluster
-            .getRuntime(runtime.googleProject, runtime.clusterName)
-            .status shouldBe ClusterStatus.Running
-        })
-        runtime <- LeonardoApiClient.getRuntime(googleProject, runtimeName)
-        _ <- LeonardoApiClient.deleteDiskWithWait(googleProject, diskName)
+        _ <- LeonardoApiClient.createDiskWithWait(googleProject,
+                                                  diskName,
+                                                  defaultCreateDiskRequest.copy(size = Some(diskSize)))
+        _ <- createRuntimeWithWait(googleProject, runtimeName, createRuntimeRequest)
+        runtime <- getRuntime(googleProject, runtimeName)
+        _ <- deleteRuntimeWithWait(googleProject, runtimeName)
+        runtimeAfterDeletion <- getRuntime(googleProject, runtimeName)
+        _ = println(s"runtimeAfterDeletion ${runtimeAfterDeletion}")
+        _ <- deleteDiskWithWait(googleProject, diskName)
       } yield {
         runtime.diskConfig.map(_.name) shouldBe Some(diskName)
         runtime.diskConfig.map(_.size) shouldBe Some(diskSize)

@@ -16,11 +16,7 @@ import org.broadinstitute.dsde.workbench.leonardo.SamResource.RuntimeSamResource
 import org.broadinstitute.dsde.workbench.leonardo.config.Config
 import org.broadinstitute.dsde.workbench.leonardo.dao.MockDockerDAO
 import org.broadinstitute.dsde.workbench.leonardo.db._
-import org.broadinstitute.dsde.workbench.leonardo.http.api.{
-  CreateRuntime2Request,
-  UpdateRuntimeConfigRequest,
-  UpdateRuntimeRequest
-}
+import org.broadinstitute.dsde.workbench.leonardo.http.api.{UpdateRuntimeConfigRequest, UpdateRuntimeRequest}
 import org.broadinstitute.dsde.workbench.leonardo.monitor.LeoPubsubMessage
 import org.broadinstitute.dsde.workbench.leonardo.monitor.LeoPubsubMessage._
 import org.broadinstitute.dsde.workbench.leonardo.util.QueueFactory

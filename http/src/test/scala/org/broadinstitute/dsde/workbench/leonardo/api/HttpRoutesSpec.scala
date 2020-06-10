@@ -17,8 +17,8 @@ import org.broadinstitute.dsde.workbench.leonardo.SamResource.{PersistentDiskSam
 import org.broadinstitute.dsde.workbench.leonardo.http.api.HttpRoutesSpec._
 import org.broadinstitute.dsde.workbench.leonardo.http.DiskRoutesTestJsonCodec._
 import org.broadinstitute.dsde.workbench.leonardo.db.TestComponent
-import org.broadinstitute.dsde.workbench.leonardo.http.api.RoutesTestJsonSupport.runtimeConfigRequestEncoder
-import org.broadinstitute.dsde.workbench.leonardo.http.service.{GetRuntimeResponse, RuntimeConfigRequest}
+import org.broadinstitute.dsde.workbench.leonardo.http.RuntimeRoutesTestJsonCodec._
+import org.broadinstitute.dsde.workbench.leonardo.http.service.{GetRuntimeResponse}
 import org.broadinstitute.dsde.workbench.leonardo.service.{MockDiskServiceInterp, MockRuntimeServiceInterp}
 import org.broadinstitute.dsde.workbench.model.WorkbenchEmail
 import org.broadinstitute.dsde.workbench.model.google.{GcsBucketName, GcsObjectName, GcsPath, GoogleProject}
@@ -267,36 +267,6 @@ class HttpRoutesSpec
 }
 
 object HttpRoutesSpec {
-  implicit val createRuntime2RequestEncoder: Encoder[CreateRuntime2Request] = Encoder.forProduct12(
-    "labels",
-    "jupyterUserScriptUri",
-    "jupyterStartUserScriptUri",
-    "runtimeConfig",
-    "userJupyterExtensionConfig",
-    "autopause",
-    "autopauseThreshold",
-    "defaultClientId",
-    "toolDockerImage",
-    "welderDockerImage",
-    "scopes",
-    "customEnvironmentVariables"
-  )(x =>
-    (
-      x.labels,
-      x.jupyterUserScriptUri,
-      x.jupyterStartUserScriptUri,
-      x.runtimeConfig,
-      x.userJupyterExtensionConfig,
-      x.autopause,
-      x.autopauseThreshold.map(_.toMinutes),
-      x.defaultClientId,
-      x.toolDockerImage,
-      x.welderDockerImage,
-      x.scopes,
-      x.customEnvironmentVariables
-    )
-  )
-
   implicit val updateGceConfigRequestEncoder: Encoder[UpdateRuntimeConfigRequest.GceConfig] = Encoder.forProduct3(
     "cloudService",
     "machineType",

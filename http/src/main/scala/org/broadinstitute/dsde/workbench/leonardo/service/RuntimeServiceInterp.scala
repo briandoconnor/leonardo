@@ -21,7 +21,6 @@ import org.broadinstitute.dsde.workbench.leonardo.config._
 import org.broadinstitute.dsde.workbench.leonardo.dao.DockerDAO
 import org.broadinstitute.dsde.workbench.leonardo.db._
 import org.broadinstitute.dsde.workbench.leonardo.http.api.{
-  CreateRuntime2Request,
   ListRuntimeResponse2,
   UpdateRuntimeConfigRequest,
   UpdateRuntimeRequest

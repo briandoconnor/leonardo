@@ -5,7 +5,6 @@ package api
 import io.circe.parser.decode
 import org.broadinstitute.dsde.workbench.google2.DiskName
 import org.broadinstitute.dsde.workbench.leonardo.http.api.RuntimeRoutes._
-import org.broadinstitute.dsde.workbench.leonardo.http.service.RuntimeConfigRequest
 import org.scalatest.{FlatSpec, Matchers}
 
 class RuntimeRoutesSpec extends FlatSpec with Matchers with LeonardoTestSuite {
