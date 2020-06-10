@@ -109,7 +109,7 @@ class RuntimeServiceInterp[F[_]: Parallel](config: RuntimeServiceConfig,
                       processGceWithPd(gce.persistentDisk, googleProject, userInfo, petSA).map(disk =>
                         RuntimeConfig.GceWithPdConfig(
                           gce.machineType.getOrElse(config.gceConfig.runtimeConfigDefaults.machineType),
-                          LeoLenses.pdInRuntimeConfig.get(disk)
+                          disk.id
                         ): RuntimeConfig
                       )
                   }
@@ -123,8 +123,7 @@ class RuntimeServiceInterp[F[_]: Parallel](config: RuntimeServiceConfig,
                                runtimeImages,
                                config,
                                req,
-                               context.now,
-                               runtimeConfig.diskId)
+                               context.now)
             )
             gcsObjectUrisToValidate = runtime.userJupyterExtensionConfig
               .map(config =>
@@ -645,8 +644,7 @@ object RuntimeServiceInterp {
                                clusterImages: Set[RuntimeImage],
                                config: RuntimeServiceConfig,
                                req: CreateRuntime2Request,
-                               now: Instant,
-                               diskIdOpt: Option[DiskId]): Either[Throwable, Runtime] = {
+                               now: Instant): Either[Throwable, Runtime] = {
     // create a LabelMap of default labels
     val defaultLabels = DefaultRuntimeLabels(
       runtimeName,
@@ -708,8 +706,7 @@ object RuntimeServiceInterp {
       allowStop = false, //TODO: double check this should be false when cluster is created
       runtimeConfigId = RuntimeConfigId(-1),
       stopAfterCreation = false,
-      patchInProgress = false,
-      persistentDiskId = diskIdOpt
+      patchInProgress = false
     )
   }
 

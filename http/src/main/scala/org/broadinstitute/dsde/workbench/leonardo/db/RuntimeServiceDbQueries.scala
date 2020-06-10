@@ -48,7 +48,7 @@ object RuntimeServiceDbQueries {
       .join(runtimeConfigs)
       .on(_._1.runtimeConfigId === _.id)
       .joinLeft(persistentDiskQuery)
-      .on { case (a, b) => a._1._1.persistentDiskId.isDefined && a._1._1.persistentDiskId === b.id }
+      .on { case (a, b) => a._2.persistentDiskId.isDefined && a._2.persistentDiskId === b.id }
     activeRuntime.result.flatMap { recs =>
       val runtimeRecs = recs.map(_._1._1)
       val res = for {
@@ -132,12 +132,10 @@ object RuntimeServiceDbQueries {
     }
   }
 
+  //TODO: this needs to be updated to check formattedBy first
   def isDiskAttachedToRuntime(diskId: DiskId)(implicit ec: ExecutionContext): DBIO[Boolean] =
-    clusterQuery
-      .filter { x =>
-        println(s"cluster's diskId ${x}")
-        x.persistentDiskId.isDefined && x.persistentDiskId === diskId
-      }
+    RuntimeConfigQueries.runtimeConfigs
+      .filter(x => x.persistentDiskId.isDefined && x.persistentDiskId === diskId)
       .length
       .result
       .map(_ > 0)

@@ -150,9 +150,9 @@ object JsonCodec {
   )(x => PersistentDiskInRuntimeConfig.unapply(x).get)
   implicit val gceWithPdConfigEncoder: Encoder[RuntimeConfig.GceWithPdConfig] = Encoder.forProduct3(
     "machineType",
-    "persistentDisk",
+    "persistentDiskId",
     "cloudService"
-  )(x => (x.machineType, x.persistentDisk, x.cloudService))
+  )(x => (x.machineType, x.persistentDiskId, x.cloudService))
   implicit val persistentDiskDecoder: Decoder[PersistentDiskInRuntimeConfig] = Decoder.forProduct7(
     "id",
     "zone",

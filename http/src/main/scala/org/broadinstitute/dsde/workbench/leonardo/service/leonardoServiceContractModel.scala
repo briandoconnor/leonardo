@@ -18,7 +18,7 @@ sealed trait RuntimeConfigRequest extends Product with Serializable {
 object RuntimeConfigRequest {
   final case class GceConfig(
     machineType: Option[MachineTypeName],
-    diskSize: Option[DiskSize] //TODO: should this size mean the include boot disk size?
+    diskSize: Option[DiskSize]
   ) extends RuntimeConfigRequest {
     val cloudService: CloudService = CloudService.GCE
   }
@@ -130,8 +130,7 @@ object CreateRuntimeRequest {
       welderEnabled = request.enableWelder.getOrElse(false),
       customEnvironmentVariables = request.customClusterEnvironmentVariables,
       runtimeConfigId = RuntimeConfigId(-1),
-      patchInProgress = false,
-      None
+      patchInProgress = false
     )
 }
 

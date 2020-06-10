@@ -36,7 +36,7 @@ object LeoRoutesSprayJsonCodec extends DefaultJsonProtocol {
       case x: RuntimeConfig.GceWithPdConfig =>
         Map(
           "machineType" -> x.machineType.value.toJson,
-          "diskSize" -> x.diskSize.gb.toJson,
+          "diskId" -> x.persistentDiskId.value.toJson,
           "cloudService" -> x.cloudService.asString.toJson
         )
     }

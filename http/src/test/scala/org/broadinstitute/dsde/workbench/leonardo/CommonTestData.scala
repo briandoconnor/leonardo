@@ -180,7 +180,7 @@ object CommonTestData {
       GcsBucketName("stagingbucketname" + index.toString),
       Some(IP("numbers.and.dots"))
     )
-
+  val defaultMachineType = MachineTypeName("n1-standard-4")
   val defaultDataprocRuntimeConfig =
     RuntimeConfig.DataprocConfig(0, MachineTypeName("n1-standard-4"), DiskSize(500), None, None, None, None, Map.empty)
 
@@ -226,8 +226,7 @@ object CommonTestData {
       welderEnabled = false,
       customEnvironmentVariables = Map.empty,
       runtimeConfigId = RuntimeConfigId(-1),
-      patchInProgress = false,
-      persistentDiskId = None
+      patchInProgress = false
     )
   }
 
@@ -261,8 +260,7 @@ object CommonTestData {
     welderEnabled = true,
     customEnvironmentVariables = Map.empty,
     runtimeConfigId = RuntimeConfigId(-1),
-    patchInProgress = false,
-    persistentDiskId = None
+    patchInProgress = false
   )
 
   val readyInstance = Instance

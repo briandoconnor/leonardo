@@ -98,9 +98,12 @@ abstract class BaseCloudServiceRuntimeMonitor[F[_]] {
       now <- nowInstant
       _ <- persistInstances(runtimeAndRuntimeConfig, dataprocInstances)
       _ <- clusterQuery.setToRunning(runtimeAndRuntimeConfig.runtime.id, publicIp, now).transaction
-      _ <- runtimeAndRuntimeConfig.runtime.persistentDiskId.traverse(diskId =>
-        persistentDiskQuery.updateStatus(diskId, DiskStatus.Ready, now).transaction
-      )
+      _ <- runtimeAndRuntimeConfig.runtimeConfig match {
+        case x: RuntimeConfig.GceWithPdConfig =>
+          persistentDiskQuery.updateStatus(x.persistentDiskId, DiskStatus.Ready, now).transaction
+        case _ =>
+          F.unit
+      }
       _ <- RuntimeMonitor.recordStatusTransitionMetrics(
         monitorContext.start,
         RuntimeMonitor.getRuntimeUI(runtimeAndRuntimeConfig.runtime),

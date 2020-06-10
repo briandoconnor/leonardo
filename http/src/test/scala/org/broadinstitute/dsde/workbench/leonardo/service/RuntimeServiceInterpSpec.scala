@@ -269,12 +269,12 @@ class RuntimeServiceInterpSpec extends FlatSpec with LeonardoTestSuite with Test
       r shouldBe Right(())
       runtime.googleProject shouldBe project
       runtime.runtimeName shouldBe name0
-      runtime.persistentDiskId shouldBe Some(disk.id)
+      runtimeConfig.asInstanceOf[RuntimeConfig.GceWithPdConfig].persistentDiskId shouldBe disk.id
       disk.googleProject shouldBe project
       disk.name shouldBe diskName
       disk.size shouldBe DiskSize(500)
-      runtimeConfig shouldBe RuntimeConfig.GceConfig(MachineTypeName("n1-standard-4"),
-                                                     DiskSize(500)) //TODO: this is a problem in terms of inconsistency
+      runtimeConfig shouldBe RuntimeConfig.GceWithPdConfig(MachineTypeName("n1-standard-4"),
+                                                           disk.id) //TODO: this is a problem in terms of inconsistency
       val expectedMessage = CreateRuntimeMessage
         .fromRuntime(runtime, runtimeConfig, Some(context.traceId))
         .copy(
@@ -286,15 +286,7 @@ class RuntimeServiceInterpSpec extends FlatSpec with LeonardoTestSuite with Test
           scopes = Config.gceConfig.defaultScopes,
           runtimeConfig = RuntimeConfig.GceWithPdConfig(
             runtimeConfig.machineType,
-            PersistentDiskInRuntimeConfig(
-              disk.id,
-              disk.zone,
-              persistentDisk.name,
-              DiskStatus.Creating,
-              persistentDisk.size.get,
-              DiskType.Standard,
-              BlockSize(4096)
-            )
+            disk.id
           )
         )
       message shouldBe expectedMessage
@@ -819,7 +811,7 @@ class RuntimeServiceInterpSpec extends FlatSpec with LeonardoTestSuite with Test
     val res = for {
       t <- ctx.ask
       savedDisk <- makePersistentDisk(DiskId(1)).save()
-      _ <- IO(makeCluster(1).copy(persistentDiskId = Some(savedDisk.id)).save())
+      _ <- IO(makeCluster(1).saveWithRuntimeConfig(RuntimeConfig.GceWithPdConfig(defaultMachineType, savedDisk.id)))
       req = PersistentDiskRequest(savedDisk.name,
                                   Some(savedDisk.size),
                                   Some(savedDisk.diskType),
