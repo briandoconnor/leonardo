@@ -7,12 +7,15 @@ import org.http4s.{AuthScheme, Credentials}
 import org.http4s.client.Client
 import org.http4s.headers.Authorization
 import org.scalatest.{DoNotDiscover, ParallelTestExecution}
+import DiskModelGenerators._
+import org.broadinstitute.dsde.workbench.google2.Generators.genDiskName
 
 //@DoNotDiscover
 class RuntimeCreationPdSpec
     extends GPAllocFixtureSpec
     with ParallelTestExecution
     with LeonardoTestUtils
+    with PropertyBasedTesting
     with GPAllocBeforeAndAfterAll {
   implicit val authTokenForOldApiClient = ronAuthToken
   implicit val auth: Authorization = Authorization(Credentials.Token(AuthScheme.Bearer, ronCreds.makeAuthToken().value))
@@ -25,8 +28,9 @@ class RuntimeCreationPdSpec
   } yield RuntimeCreationPdSpecDependencies(httpClient, diskService)
 
   "create and attach a persistent disk" in { googleProject =>
+    val diskName = genDiskName.sample.get
+    val diskSize = genDiskSize.sample.get
     val runtimeName = randomClusterName
-    val diskName = DiskName("test-disk-3")
     val runtimeRequest = defaultRuntimeRequest.copy(
       runtimeConfig = Some(
         RuntimeConfigRequest.GceWithPdConfig(
@@ -34,7 +38,7 @@ class RuntimeCreationPdSpec
           None,
           PersistentDiskRequest(
             diskName.value,
-            Some(50),
+            Some(diskSize.gb),
             None,
             None,
             Map.empty
@@ -58,6 +62,7 @@ class RuntimeCreationPdSpec
           diskAfterDelete <- LeonardoApiClient.getDisk(googleProject, diskName)
         } yield {
           disk.status shouldBe DiskStatus.Ready
+          disk.size shouldBe diskSize
           diskAfterDelete.status shouldBe DiskStatus.Deleted
         }
       }
@@ -67,8 +72,8 @@ class RuntimeCreationPdSpec
 
   "create and attach an existing a persistent disk" in { googleProject =>
     val runtimeName = randomClusterName
-    val diskName = DiskName("test-disk-1")
-    val diskSize = DiskSize(30)
+    val diskName = genDiskName.sample.get
+    val diskSize = genDiskSize.sample.get
 
     val res = dependencies.use { dep =>
       implicit val client = dep.httpClient
@@ -80,7 +85,7 @@ class RuntimeCreationPdSpec
             None,
             PersistentDiskRequest(
               diskName.value,
-              Some(30),
+              Some(diskSize.gb),
               None,
               None,
               Map.empty

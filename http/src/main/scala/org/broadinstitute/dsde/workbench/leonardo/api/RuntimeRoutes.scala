@@ -5,16 +5,18 @@ package api
 import java.net.URL
 import java.util.UUID
 
-import cats.implicits._
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directive, Directive1}
 import cats.effect.{IO, Timer}
+import cats.implicits._
 import cats.mtl.ApplicativeAsk
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe.{Decoder, DecodingFailure, Encoder}
+import io.opencensus.scala.akka.http.TracingDirective.traceRequestForService
+import io.opencensus.trace.Span
 import org.broadinstitute.dsde.workbench.google2.{DiskName, MachineTypeName}
 import org.broadinstitute.dsde.workbench.leonardo.JsonCodec._
 import org.broadinstitute.dsde.workbench.leonardo.SamResource.RuntimeSamResource
@@ -29,8 +31,6 @@ import org.broadinstitute.dsde.workbench.leonardo.http.service.{
 import org.broadinstitute.dsde.workbench.leonardo.model.RequestValidationError
 import org.broadinstitute.dsde.workbench.model.google.GoogleProject
 import org.broadinstitute.dsde.workbench.model.{TraceId, UserInfo}
-import io.opencensus.scala.akka.http.TracingDirective.traceRequestForService
-import io.opencensus.trace.{AttributeValue, Span}
 
 import scala.concurrent.duration._
 
@@ -171,9 +171,7 @@ class RuntimeRoutes(runtimeService: RuntimeService[IO], userInfoDirectives: User
                                         runtimeName: RuntimeName,
                                         req: CreateRuntime2Request,
                                         span: Span): IO[ToResponseMarshallable] = {
-    span.putAttribute("api", AttributeValue.stringAttributeValue("createRuntime"))
-
-    for {
+    val res = for {
       implicit0(ctx: ApplicativeAsk[IO, AppContext]) <- AppContext.lift[IO](Some(span))
       _ <- runtimeService.createRuntime(
         userInfo,
@@ -182,72 +180,76 @@ class RuntimeRoutes(runtimeService: RuntimeService[IO], userInfoDirectives: User
         req
       )
       _ <- IO(span.end())
-    } yield StatusCodes.Accepted
+    } yield StatusCodes.Accepted: ToResponseMarshallable
+
+    spanResource[IO](span, "createRuntime")
+      .use(_ => res)
   }
 
   private[api] def getRuntimeHandler(userInfo: UserInfo,
                                      googleProject: GoogleProject,
                                      runtimeName: RuntimeName,
                                      span: Span): IO[ToResponseMarshallable] = {
-    span.putAttribute("api", AttributeValue.stringAttributeValue("getRuntime"))
-
-    for {
+    val res = for {
       implicit0(ctx: ApplicativeAsk[IO, AppContext]) <- AppContext.lift[IO](Some(span))
       resp <- runtimeService.getRuntime(userInfo, googleProject, runtimeName)
-      _ <- IO(span.end())
-    } yield StatusCodes.OK -> resp
+    } yield StatusCodes.OK -> resp: ToResponseMarshallable
+
+    spanResource[IO](span, "getRuntime")
+      .use(_ => res)
   }
 
   private[api] def listRuntimesHandler(userInfo: UserInfo,
                                        googleProject: Option[GoogleProject],
                                        params: Map[String, String],
                                        span: Span): IO[ToResponseMarshallable] = {
-    span.putAttribute("api", AttributeValue.stringAttributeValue("listRuntime"))
-
-    for {
+    val res = for {
       implicit0(ctx: ApplicativeAsk[IO, AppContext]) <- AppContext.lift[IO](Some(span))
       resp <- runtimeService.listRuntimes(userInfo, googleProject, params)
-      _ <- IO(span.end())
-    } yield StatusCodes.OK -> resp
+    } yield StatusCodes.OK -> resp: ToResponseMarshallable
+
+    spanResource[IO](span, "listRuntime")
+      .use(_ => res)
   }
 
   private[api] def deleteRuntimeHandler(userInfo: UserInfo,
                                         googleProject: GoogleProject,
                                         runtimeName: RuntimeName,
                                         span: Span): IO[ToResponseMarshallable] = {
-    span.putAttribute("api", AttributeValue.stringAttributeValue("deleteRuntime"))
-
-    for {
+    val res = for {
       implicit0(ctx: ApplicativeAsk[IO, AppContext]) <- AppContext.lift[IO](Some(span))
       _ <- runtimeService.deleteRuntime(userInfo, googleProject, runtimeName)
-      _ <- IO(span.end())
-    } yield StatusCodes.Accepted
+    } yield StatusCodes.Accepted: ToResponseMarshallable
+
+    spanResource[IO](span, "deleteRuntime")
+      .use(_ => res)
   }
 
   private[api] def stopRuntimeHandler(userInfo: UserInfo,
                                       googleProject: GoogleProject,
                                       runtimeName: RuntimeName,
                                       span: Span): IO[ToResponseMarshallable] = {
-    span.putAttribute("api", AttributeValue.stringAttributeValue("stopRuntime"))
-
-    for {
+    val res = for {
       implicit0(ctx: ApplicativeAsk[IO, AppContext]) <- AppContext.lift[IO](Some(span))
       _ <- runtimeService.stopRuntime(userInfo, googleProject, runtimeName)
-      _ <- IO(span.end())
-    } yield StatusCodes.Accepted
+    } yield StatusCodes.Accepted: ToResponseMarshallable
+
+    spanResource[IO](span, "stopRuntime")
+      .use(_ => res)
   }
 
   private[api] def startRuntimeHandler(userInfo: UserInfo,
                                        googleProject: GoogleProject,
                                        runtimeName: RuntimeName,
                                        span: Span): IO[ToResponseMarshallable] = {
-    span.putAttribute("api", AttributeValue.stringAttributeValue("startRuntime"))
-
-    for {
+    val res = for {
       implicit0(ctx: ApplicativeAsk[IO, AppContext]) <- AppContext.lift[IO](Some(span))
       _ <- runtimeService.startRuntime(userInfo, googleProject, runtimeName)
       _ <- IO(span.end())
-    } yield StatusCodes.Accepted
+    } yield StatusCodes.Accepted: ToResponseMarshallable
+
+    spanResource[IO](span, "startRuntime")
+      .use(_ => res)
   }
 
   private[api] def updateRuntimeHandler(userInfo: UserInfo,
@@ -255,12 +257,13 @@ class RuntimeRoutes(runtimeService: RuntimeService[IO], userInfoDirectives: User
                                         runtimeName: RuntimeName,
                                         req: UpdateRuntimeRequest,
                                         span: Span): IO[ToResponseMarshallable] = {
-    span.putAttribute("api", AttributeValue.stringAttributeValue("updateRuntime"))
-
-    for {
+    val res = for {
       implicit0(ctx: ApplicativeAsk[IO, AppContext]) <- AppContext.lift[IO](Some(span))
       _ <- runtimeService.updateRuntime(userInfo, googleProject, runtimeName, req)
-    } yield StatusCodes.Accepted
+    } yield StatusCodes.Accepted: ToResponseMarshallable
+
+    spanResource[IO](span, "updateRuntime")
+      .use(_ => res)
   }
 }
 
